@@ -1,6 +1,11 @@
 import tkinter as tk
 from tkinter import scrolledtext
 import time
+from cpu import CPU
+
+# ----------------- Logic --------------------------------------------
+
+# -------- New Instruction Logic------------------------------
 
 
 def newInstruction():
@@ -12,7 +17,134 @@ def newInstruction():
         printToConsole("Se encuentra activa la ejecución en ciclo.")
 
 
+def changeLoopFlag():
+    global loopInstructionsFlag
+    loopInstructionsFlag = not loopInstructionsFlag
+
+    if (
+        loopInstructionsFlag
+    ):  # El programa está enciclado para leer nuevas instrucciones
+        loop_button.config(image=loop_photoimage_detener)
+        instructionsLoop()
+
+    else:
+        loop_button.config(image=loop_photoimage_iniciar)
+
+
+# Loop para crear las instrucciones
+def instructionsLoop():
+    if loopInstructionsFlag:
+        printToConsole("Hilo")
+        main.after(2000, instructionsLoop)
+    else:
+        return
+
+
+# -------- Console Logic ------------------------------
+
+
+def printToConsole(text: str):
+    current_time = time.strftime("%H:%M:%S", time.localtime())
+    console_text["state"] = "normal"
+    console_text.insert("end", current_time + ": " + str(text) + "\n")
+    console_text.see("end")
+    console_text["state"] = "disabled"
+
+
+def cleanConsole():
+    console_text["state"] = "normal"
+    console_text.delete("1.0", "end")
+    console_text["state"] = "disabled"
+
+
+# -------- util Logic ------------------------------
+
+
+def resetProgram():
+    global loopInstructionsFlag
+    # Set the loop logic to false
+    loopInstructionsFlag = False
+    loop_button.config(image=loop_photoimage_iniciar)
+    cleanConsole()
+    # Clean and reset memory
+    resetMemory()
+    create_memory_table(memory_frame, ("Arial", 14), "white")
+
+
+def resetMemory():
+    global memory_dict
+    for i in range(8):
+        bin_key = format(i, "03b")
+        memory_dict[bin_key] = 0x0
+
+
+# -------- Graphic Logic ------------------------------
+
+
+def create_memory_table(parent, font, bg_color):
+    global memory_dict
+    index = 0
+    for i in range(3):
+        for j in range(3):
+            if i == 2 and j == 2:
+                break
+            bin_key = format(
+                index, "03b"
+            )  # Convertir el índice a una llave en formato binario
+            cell_value = memory_dict[bin_key]
+            cell = tk.Entry(parent, font=font, bg=bg_color, justify="center", width=12)
+            cell_value = format(cell_value, "04X")
+            cell.insert(0, bin_key + ": " + cell_value)
+            cell.config(state="readonly")
+            cell.grid(row=i, column=j, padx=3, pady=4, sticky="nsew")
+            index += 1
+
+        parent.grid_rowconfigure(i, weight=1)
+        parent.grid_columnconfigure(i, weight=1)
+
+
+def render_CPU_info(cpu):
+    cpus_frames = {
+        "cpu0": cpu0_frame,
+        "cpu1": cpu1_frame,
+        "cpu2": cpu2_frame,
+        "cpu3": cpu3_frame,
+    }
+    for key, value in cpus_frames.items():
+        render_cpu_headers(value)
+
+
+def render_cpu_headers(parent):
+    stateLabel = tk.Label(
+        parent,
+        text="Estado\nCoherencia",
+        font=("Arial", 10),
+        bg="white",
+        justify="center",
+    )
+    dirLabel = tk.Label(
+        parent,
+        text="Dirección\nMemoria",
+        font=("Arial", 10),
+        bg="white",
+        justify="center",
+    )
+    dataLabel = tk.Label(
+        parent,
+        text="Dato",
+        font=("Arial", 10),
+        bg="white",
+        justify="center",
+    )
+
+    stateLabel.place(x=40, y=55)
+    dirLabel.place(x=120, y=55)
+    dataLabel.place(x=185, y=65)
+
+
 # Variables globales
+
+# Memoria
 
 memory_dict = {
     "000": 0x0,
@@ -24,6 +156,21 @@ memory_dict = {
     "110": 0x0,
     "111": 0x0,
 }
+
+
+# CPUS
+cpu0 = CPU()
+cpu1 = CPU()
+cpu2 = CPU()
+cpu3 = CPU()
+
+cpus = {
+    "cpu0": cpu0,
+    "cpu1": cpu1,
+    "cpu2": cpu2,
+    "cpu3": cpu3,
+}
+
 
 loopInstructionsFlag = False
 
@@ -78,21 +225,7 @@ console_text.grid(column=0, pady=0, padx=0)
 console_text["state"] = "disabled"
 
 
-def printToConsole(text: str):
-    current_time = time.strftime("%H:%M:%S", time.localtime())
-    console_text["state"] = "normal"
-    console_text.insert("end", current_time + ": " + str(text) + "\n")
-    console_text.see("end")
-    console_text["state"] = "disabled"
-
-
-def cleanConsole():
-    console_text["state"] = "normal"
-    console_text.delete("1.0", "end")
-    console_text["state"] = "disabled"
-
-
-# Botones
+# ----------------------------Botones----------------------------------
 
 new_instruction_photoimage = tk.PhotoImage(file=r"images\button_nueva-instruccion.png")
 new_instruction_button = tk.Button(
@@ -102,20 +235,6 @@ new_instruction_button = tk.Button(
     bg="white",
     borderwidth=0,
 )
-
-
-def changeLoopFlag():
-    global loopInstructionsFlag
-    loopInstructionsFlag = not loopInstructionsFlag
-
-    if (
-        loopInstructionsFlag
-    ):  # El programa está enciclado para leer nuevas instrucciones
-        loop_button.config(image=loop_photoimage_detener)
-        instructionsLoop()
-
-    else:
-        loop_button.config(image=loop_photoimage_iniciar)
 
 
 loop_photoimage_detener = tk.PhotoImage(file=r"images\button_detener-ciclo.png")
@@ -139,7 +258,7 @@ reset_photoimage = tk.PhotoImage(file=r"images\button_reiniciar.png")
 reset_button = tk.Button(
     buttons_frame,
     image=reset_photoimage,
-    command=cleanConsole,
+    command=resetProgram,
     bg="white",
     borderwidth=0,
 )
@@ -149,41 +268,25 @@ loop_button.place(x=33, y=35)
 reset_button.place(x=42, y=68)
 
 
-# Memory labels
-
-
-def create_memory_table(parent, font, bg_color):
-    global memory_dict
-    index = 0
-    for i in range(3):
-        for j in range(3):
-            if i == 2 and j == 2:
-                break
-            bin_key = format(
-                index, "03b"
-            )  # Convertir el índice a una llave en formato binario
-            cell_value = memory_dict[bin_key]
-            cell = tk.Entry(parent, font=font, bg=bg_color, justify="center", width=12)
-            cell_value = format(cell_value, "04X")
-            cell.insert(0, bin_key + ": " + cell_value)
-            cell.config(state="readonly")
-            cell.grid(row=i, column=j, padx=3, pady=4, sticky="nsew")
-            index += 1
-
-        parent.grid_rowconfigure(i, weight=1)
-        parent.grid_columnconfigure(i, weight=1)
-
+# ----------------------------Memoria----------------------------------
 
 create_memory_table(memory_frame, ("Arial", 14), "white")
 
 
-# Loop para crear las instrucciones
-def instructionsLoop():
-    if loopInstructionsFlag:
-        printToConsole("Hilo")
-        main.after(2000, instructionsLoop)
-    else:
-        return
+# ----------------------------CPU labels----------------------------------
 
+cpu0_title_label = tk.Label(cpu0_frame, text="CPU 0", font=("Arial", 24), bg="white")
+cpu0_title_label.place(x=60, y=10)
+
+cpu1_title_label = tk.Label(cpu1_frame, text="CPU 1", font=("Arial", 24), bg="white")
+cpu1_title_label.place(x=60, y=10)
+
+cpu2_title_label = tk.Label(cpu2_frame, text="CPU 2", font=("Arial", 24), bg="white")
+cpu2_title_label.place(x=60, y=10)
+
+cpu3_title_label = tk.Label(cpu3_frame, text="CPU 3", font=("Arial", 24), bg="white")
+cpu3_title_label.place(x=60, y=10)
+
+render_CPU_info("cpu0")
 
 main.mainloop()
