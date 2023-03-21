@@ -103,15 +103,16 @@ def create_memory_table(parent, font, bg_color):
         parent.grid_columnconfigure(i, weight=1)
 
 
-def render_CPU_info(cpu):
+def render_CPU_info():
     cpus_frames = {
         "cpu0": cpu0_frame,
         "cpu1": cpu1_frame,
         "cpu2": cpu2_frame,
         "cpu3": cpu3_frame,
     }
-    for key, value in cpus_frames.items():
-        render_cpu_headers(value)
+    for cpu, parent in cpus_frames.items():
+        render_cpu_headers(parent)
+        render_cpu_cache(cpu, parent)
 
 
 def render_cpu_headers(parent):
@@ -142,6 +143,37 @@ def render_cpu_headers(parent):
     dataLabel.place(x=185, y=65)
 
 
+def render_cpu_cache(cpu, parent):
+    global cpus_dict
+    cache = cpus_dict[cpu].cache
+    y_pos = 100
+    x_pos = [70, 135, 185]
+    for block, values in cache.items():
+        blockName = tk.Label(
+            parent,
+            text=block,
+            font=("Arial", 10),
+            bg="white",
+            justify="center",
+        )
+        blockName.place(x=10, y=y_pos)
+        cont = 0
+        for data in values:
+            if cont == 2:
+                data = format(data, "04X")
+            label = tk.Label(
+                parent,
+                text=data,
+                font=("Arial", 10),
+                bg="white",
+                justify="center",
+            )
+            label.place(x=x_pos[cont], y=y_pos)
+
+            cont += 1
+        y_pos += 50
+
+
 # Variables globales
 
 # Memoria
@@ -164,7 +196,7 @@ cpu1 = CPU()
 cpu2 = CPU()
 cpu3 = CPU()
 
-cpus = {
+cpus_dict = {
     "cpu0": cpu0,
     "cpu1": cpu1,
     "cpu2": cpu2,
@@ -287,6 +319,6 @@ cpu2_title_label.place(x=60, y=10)
 cpu3_title_label = tk.Label(cpu3_frame, text="CPU 3", font=("Arial", 24), bg="white")
 cpu3_title_label.place(x=60, y=10)
 
-render_CPU_info("cpu0")
+render_CPU_info()
 
 main.mainloop()
