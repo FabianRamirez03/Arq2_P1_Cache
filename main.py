@@ -78,6 +78,10 @@ def resetMemory():
         memory_dict[bin_key] = 0x0
 
 
+def close_app():
+    main.destroy()
+
+
 # -------- Graphic Logic ------------------------------
 
 
@@ -216,25 +220,64 @@ main.resizable(False, False)
 main_frame = tk.Frame(main, bg="white", height=500, width=900)
 main_frame.place(x=0, y=0)
 
-cpus_frame = tk.Frame(main_frame, bg="grey", height=300, width=900)
+cpus_frame = tk.Frame(main_frame, bg="white", height=300, width=900)
 cpus_frame.place(x=0, y=0)
 
-cpu0_frame = tk.Frame(cpus_frame, bg="red", height=300, width=225)
+cpu0_frame = tk.Frame(
+    cpus_frame,
+    bg="white",
+    height=300,
+    width=225,
+    border=2,
+    borderwidth=1,
+    relief="ridge",
+)
 cpu0_frame.place(x=0, y=0)
 
-cpu1_frame = tk.Frame(cpus_frame, bg="yellow", height=300, width=225)
+cpu1_frame = tk.Frame(
+    cpus_frame,
+    bg="white",
+    height=300,
+    width=225,
+    border=2,
+    borderwidth=1,
+    relief="ridge",
+)
 cpu1_frame.place(x=225, y=0)
 
-cpu2_frame = tk.Frame(cpus_frame, bg="blue", height=300, width=225)
+cpu2_frame = tk.Frame(
+    cpus_frame,
+    bg="white",
+    height=300,
+    width=225,
+    border=2,
+    borderwidth=1,
+    relief="ridge",
+)
 cpu2_frame.place(x=450, y=0)
 
-cpu3_frame = tk.Frame(cpus_frame, bg="green", height=300, width=225)
+cpu3_frame = tk.Frame(
+    cpus_frame,
+    bg="white",
+    height=300,
+    width=225,
+    border=2,
+    borderwidth=1,
+    relief="ridge",
+)
 cpu3_frame.place(x=675, y=0)
 
 bus_frame = tk.Frame(main_frame, bg="LightSeaGreen", height=100, width=900)
 bus_frame.place(x=0, y=300)
 
-botton_frame = tk.Frame(main_frame, bg="OrangeRed", height=100, width=900)
+botton_frame = tk.Frame(
+    main_frame,
+    bg="white",
+    height=100,
+    width=900,
+    borderwidth=1,
+    relief="ridge",
+)
 botton_frame.place(x=0, y=400)
 
 memory_frame = tk.Frame(botton_frame, bg="white", height=100, width=420)
@@ -320,5 +363,8 @@ cpu3_title_label = tk.Label(cpu3_frame, text="CPU 3", font=("Arial", 24), bg="wh
 cpu3_title_label.place(x=60, y=10)
 
 render_CPU_info()
+
+
+main.protocol("WM_DELETE_WINDOW", close_app)
 
 main.mainloop()
