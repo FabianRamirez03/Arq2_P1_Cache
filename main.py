@@ -1,11 +1,11 @@
 import tkinter as tk
 from tkinter import scrolledtext
 import time
-
+import random
 
 # ----------------- Logic --------------------------------------------
 
-
+# -------------CPUS-------------------
 class CPU:
     def __init__(self, id: int):
         self.id = id
@@ -17,17 +17,43 @@ class CPU:
         }
 
     def start(self, window):
-        message = "CPU" + str(self.id)
+        message = self.newInstruction()
         printToConsole(message)
         window.after(
             2000, self.start, window
         )  # Llama a start_thread cada 2000 ms (2 segundos)
+
+    def newInstruction(self):
+        def binary(num, length=4):
+            return format(num, f"0{length}b")
+
+        def hexa(num, length=4):
+            return format(num, f"0{length}X")
+
+        # Distribución de probabilidad
+        p_calc = 1 / 5
+        p_write = 2 / 3
+
+        r = random.random()
+
+        if r < p_calc:
+            return f"P{self.id}: CALC"
+        elif r < p_calc + p_write:
+            addr = binary(random.randint(0, 7), 3)
+            data = hexa(random.randint(0, 65535))
+            return f"P{self.id}: WRITE {addr} {data}"
+        else:
+            addr = binary(random.randint(0, 7), 3)
+            return f"P{self.id}: READ {addr}"
 
 
 def start_all_Cpus():
     global main, cpus_list
     for cpu in cpus_list:
         cpu.start(main)
+
+
+# ------------- Instruction Generation ---------------------------
 
 
 # -------- New Instruction Logic------------------------------
