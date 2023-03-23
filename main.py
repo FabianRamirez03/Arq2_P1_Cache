@@ -1,9 +1,20 @@
 import tkinter as tk
 from tkinter import scrolledtext
 import time
-from cpu import CPU
 
 # ----------------- Logic --------------------------------------------
+
+
+class CPU:
+    def __init__(self, id: int):
+        self.id = id
+        self.cache = {
+            "B0": ["S", "000", 0x0000],
+            "B1": ["S", "000", 0x0000],
+            "B2": ["S", "000", 0x0000],
+            "B3": ["S", "000", 0x0000],
+        }
+
 
 # -------- New Instruction Logic------------------------------
 
@@ -195,10 +206,10 @@ memory_dict = {
 
 
 # CPUS
-cpu0 = CPU()
-cpu1 = CPU()
-cpu2 = CPU()
-cpu3 = CPU()
+cpu0 = CPU(0)
+cpu1 = CPU(1)
+cpu2 = CPU(2)
+cpu3 = CPU(3)
 
 cpus_dict = {
     "cpu0": cpu0,
