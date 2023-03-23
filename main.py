@@ -1,8 +1,9 @@
 import tkinter as tk
-from tkinter import scrolledtext
+from tkinter import scrolledtext, messagebox
 import time
 import random
 
+main = tk.Tk(className="Arquitectura de Computadores 2. Proyecto I")
 # ----------------- Logic --------------------------------------------
 
 # -------------CPUS-------------------
@@ -144,6 +145,16 @@ def close_app():
     main.destroy()
 
 
+def on_ctrl_s(event):
+    with open("logs.txt", "w") as file:
+        file.write(console_text.get("1.0", tk.END))
+    messagebox.showinfo(
+        "Archivo guardado", "El archivo logs.txt se ha guardado correctamente."
+    )
+
+
+main.bind("<Control-s>", on_ctrl_s)
+
 # -------- Graphic Logic ------------------------------
 
 
@@ -277,7 +288,7 @@ SingleCycleFlag = False
 cycle_duration = 2000  # 2000 milisegundos = 2 segundos por ciclo
 
 # Main widget settings
-main = tk.Tk(className="Arquitectura de Computadores 2. Proyecto I")
+
 main.geometry("900x500")
 main.resizable(False, False)
 
@@ -349,7 +360,7 @@ botton_frame.place(x=0, y=400)
 memory_frame = tk.Frame(botton_frame, bg="white", height=100, width=420)
 memory_frame.place(x=0, y=0)
 
-buttons_frame = tk.Frame(botton_frame, bg="orange", height=100, width=130)
+buttons_frame = tk.Frame(botton_frame, bg="white", height=100, width=130)
 buttons_frame.place(x=325, y=0)
 
 console_frame = tk.Frame(botton_frame, bg="white", height=100, width=445)

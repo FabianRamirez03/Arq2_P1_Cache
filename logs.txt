@@ -1,0 +1,59 @@
+00:22:51: Instruction P0: WRITE 011 C612 generated. Duration: 1
+00:22:51: Instruction P1: WRITE 011 03D1 generated. Duration: 5
+00:22:51: Instruction P2: CALC generated. Duration: 1
+00:22:51: Instruction P3: READ 100 generated. Duration: 5
+00:22:52: Instruction P0: WRITE 011 C612 completed
+00:22:52: Instruction P2: CALC completed
+00:22:52: Instruction P0: WRITE 000 27C9 generated. Duration: 3
+00:22:52: Instruction P2: WRITE 011 C5E0 generated. Duration: 4
+00:22:53: Instruction P1: WRITE 011 03D1 completed
+00:22:53: Instruction P3: READ 100 completed
+00:22:53: Instruction P0: WRITE 000 27C9 completed
+00:22:53: Instruction P1: CALC generated. Duration: 5
+00:22:53: Instruction P3: CALC generated. Duration: 1
+00:22:53: Instruction P0: WRITE 010 A7AF generated. Duration: 5
+00:22:53: Instruction P2: WRITE 011 C5E0 completed
+00:22:53: Instruction P2: WRITE 100 B696 generated. Duration: 2
+00:22:53: Instruction P3: CALC completed
+00:22:53: Instruction P3: WRITE 010 264C generated. Duration: 3
+00:22:54: Instruction P2: WRITE 100 B696 completed
+00:22:54: Instruction P1: CALC completed
+00:22:54: Instruction P2: WRITE 001 F0E0 generated. Duration: 2
+00:22:54: Instruction P0: WRITE 010 A7AF completed
+00:22:54: Instruction P1: CALC generated. Duration: 4
+00:22:54: Instruction P3: WRITE 010 264C completed
+00:22:54: Instruction P0: WRITE 101 D5B3 generated. Duration: 2
+00:22:54: Instruction P3: CALC generated. Duration: 5
+00:22:54: Instruction P2: WRITE 001 F0E0 completed
+00:22:54: Instruction P2: WRITE 000 EABA generated. Duration: 4
+00:22:55: Instruction P0: WRITE 101 D5B3 completed
+00:22:55: Instruction P0: WRITE 111 57C6 generated. Duration: 2
+00:22:55: Instruction P1: CALC completed
+00:22:55: Instruction P1: WRITE 010 3176 generated. Duration: 4
+00:22:55: Instruction P3: CALC completed
+00:22:55: Instruction P0: WRITE 111 57C6 completed
+00:22:55: Instruction P2: WRITE 000 EABA completed
+00:22:55: Instruction P3: WRITE 001 45D8 generated. Duration: 4
+00:22:55: Instruction P0: READ 101 generated. Duration: 1
+00:22:55: Instruction P2: CALC generated. Duration: 2
+00:22:56: Instruction P0: READ 101 completed
+00:22:56: Instruction P1: WRITE 010 3176 completed
+00:22:56: Instruction P0: WRITE 001 D852 generated. Duration: 4
+00:22:56: Instruction P1: CALC generated. Duration: 4
+00:22:56: Instruction P2: CALC completed
+00:22:56: Instruction P2: WRITE 001 70C2 generated. Duration: 3
+00:22:56: Instruction P3: WRITE 001 45D8 completed
+00:22:56: Instruction P3: WRITE 011 F16B generated. Duration: 4
+00:22:57: Instruction P0: WRITE 001 D852 completed
+00:22:57: Instruction P1: CALC completed
+00:22:57: Instruction P2: WRITE 001 70C2 completed
+00:22:57: Instruction P0: WRITE 011 6B67 generated. Duration: 3
+00:22:57: Instruction P1: WRITE 111 6718 generated. Duration: 4
+00:22:57: Instruction P2: CALC generated. Duration: 4
+00:22:57: Instruction P3: WRITE 011 F16B completed
+00:22:57: Instruction P3: WRITE 011 DBA1 generated. Duration: 3
+00:22:58: Instruction P0: WRITE 011 6B67 completed
+00:22:58: Instruction P0: READ 101 generated. Duration: 5
+00:22:58: Instruction P1: WRITE 111 6718 completed
+00:22:58: Instruction P2: CALC completed
+
