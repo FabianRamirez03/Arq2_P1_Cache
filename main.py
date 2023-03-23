@@ -9,6 +9,8 @@ import random
 class CPU:
     def __init__(self, id: int):
         self.id = id
+        self.instruction = ""
+        self.instDuration = 0
         self.cache = {
             "B0": ["S", "000", 0x0000],
             "B1": ["S", "000", 0x0000],
@@ -16,12 +18,25 @@ class CPU:
             "B3": ["S", "000", 0x0000],
         }
 
-    def start(self, window):
-        message = self.newInstruction()
-        printToConsole(message)
-        window.after(
-            cycle_duration, self.start, window
-        )  # Llama a start_thread cada cycle_duration ms (2 segundos)
+    def executeCycle(self):
+        if self.instruction == "":
+            self.generateNewInstruction()
+        else:
+            self.executeInstruction()
+
+    def generateNewInstruction(self):
+        self.instruction = self.newInstruction()
+        self.instDuration = random.randint(1, 5)
+        printToConsole(
+            f"Instruction {self.instruction} generated. Duration: {self.instDuration}"
+        )
+
+    def executeInstruction(self):
+        if self.instDuration == 0:
+            printToConsole(f"Instruction {self.instruction} completed")
+            self.instruction = ""
+        else:
+            self.instDuration -= 1
 
     def newInstruction(self):
         def binary(num, length=4):
@@ -47,46 +62,44 @@ class CPU:
             return f"P{self.id}: READ {addr}"
 
 
-def start_all_Cpus():
+def newCycle_cpus():
     global main, cpus_list
     for cpu in cpus_list:
-        cpu.start(main)
+        cpu.executeCycle()
 
 
 # ------------- Instruction Generation ---------------------------
 
 
-# -------- New Instruction Logic------------------------------
+# -------- New Cycle Logic------------------------------
 
 
-def newInstruction():
+def newCycle():
     global memory_dict
-    if not loopInstructionsFlag:
-        memory_dict["000"] += 1
-        create_memory_table(memory_frame, ("Arial", 14), "white")
+    if not loopCyclesFlag:
+        newCycle_cpus()
     else:
         printToConsole("Se encuentra activa la ejecución en ciclo.")
 
 
 def changeLoopFlag():
-    global loopInstructionsFlag
-    loopInstructionsFlag = not loopInstructionsFlag
+    global loopCyclesFlag
+    loopCyclesFlag = not loopCyclesFlag
 
-    if (
-        loopInstructionsFlag
-    ):  # El programa está enciclado para leer nuevas instrucciones
+    if loopCyclesFlag:  # El programa está enciclado para leer nuevas instrucciones
         loop_button.config(image=loop_photoimage_detener)
-        instructionsLoop()
+        LoopExecution()
 
     else:
         loop_button.config(image=loop_photoimage_iniciar)
 
 
 # Loop para crear las instrucciones
-def instructionsLoop():
-    if loopInstructionsFlag:
-        printToConsole("Hilo")
-        main.after(cycle_duration, instructionsLoop)
+def LoopExecution():
+    global main, loopCyclesFlag
+    if loopCyclesFlag:
+        newCycle_cpus()
+        main.after(cycle_duration, LoopExecution)
     else:
         return
 
@@ -112,14 +125,14 @@ def cleanConsole():
 
 
 def resetProgram():
-    global loopInstructionsFlag
+    global loopCyclesFlag
     # Set the loop logic to false
-    loopInstructionsFlag = False
+    loopCyclesFlag = False
     loop_button.config(image=loop_photoimage_iniciar)
     cleanConsole()
     # Clean and reset memory
     resetMemory()
-    create_memory_table(memory_frame, ("Arial", 14), "white")
+    create_memory_table(memory_frame, ("Arial", 12), "white")
 
 
 def resetMemory():
@@ -147,7 +160,7 @@ def create_memory_table(parent, font, bg_color):
                 index, "03b"
             )  # Convertir el índice a una llave en formato binario
             cell_value = memory_dict[bin_key]
-            cell = tk.Entry(parent, font=font, bg=bg_color, justify="center", width=12)
+            cell = tk.Entry(parent, font=font, bg=bg_color, justify="center", width=11)
             cell_value = format(cell_value, "04X")
             cell.insert(0, bin_key + ": " + cell_value)
             cell.config(state="readonly")
@@ -260,7 +273,8 @@ cpus_dict = {
 
 cpus_list = [cpu0, cpu1, cpu2, cpu3]
 
-loopInstructionsFlag = False
+loopCyclesFlag = False
+SingleCycleFlag = False
 
 cycle_duration = 2000  # 2000 milisegundos = 2 segundos por ciclo
 
@@ -337,18 +351,18 @@ botton_frame.place(x=0, y=400)
 memory_frame = tk.Frame(botton_frame, bg="white", height=100, width=420)
 memory_frame.place(x=0, y=0)
 
-buttons_frame = tk.Frame(botton_frame, bg="white", height=100, width=150)
-buttons_frame.place(x=420, y=0)
+buttons_frame = tk.Frame(botton_frame, bg="orange", height=100, width=130)
+buttons_frame.place(x=325, y=0)
 
-console_frame = tk.Frame(botton_frame, bg="white", height=100, width=330)
-console_frame.place(x=570, y=0)
+console_frame = tk.Frame(botton_frame, bg="white", height=100, width=445)
+console_frame.place(x=455, y=0)
 
 # --------------- Componenents ----------------------------------------
 
 # Consola
 
 console_text = scrolledtext.ScrolledText(
-    console_frame, wrap=tk.WORD, width=44, height=6, font=("Arial", 10)
+    console_frame, wrap=tk.WORD, width=60, height=6, font=("Arial", 10)
 )
 console_text.grid(column=0, pady=0, padx=0)
 console_text["state"] = "disabled"
@@ -360,7 +374,7 @@ new_instruction_photoimage = tk.PhotoImage(file=r"images\button_nueva-instruccio
 new_instruction_button = tk.Button(
     buttons_frame,
     image=new_instruction_photoimage,
-    command=newInstruction,
+    command=newCycle_cpus,
     bg="white",
     borderwidth=0,
 )
@@ -369,9 +383,7 @@ new_instruction_button = tk.Button(
 loop_photoimage_detener = tk.PhotoImage(file=r"images\button_detener-ciclo.png")
 loop_photoimage_iniciar = tk.PhotoImage(file=r"images\button_iniciar-ciclo.png")
 
-loop_photoimage = (
-    loop_photoimage_detener if loopInstructionsFlag else loop_photoimage_iniciar
-)
+loop_photoimage = loop_photoimage_detener if loopCyclesFlag else loop_photoimage_iniciar
 
 
 loop_button = tk.Button(
@@ -399,7 +411,7 @@ reset_button.place(x=42, y=68)
 
 # ----------------------------Memoria----------------------------------
 
-create_memory_table(memory_frame, ("Arial", 14), "white")
+create_memory_table(memory_frame, ("Arial", 12), "white")
 
 
 # ----------------------------CPU labels----------------------------------
@@ -421,6 +433,5 @@ render_CPU_info()
 
 main.protocol("WM_DELETE_WINDOW", close_app)
 
-start_all_Cpus()
 
 main.mainloop()
