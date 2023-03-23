@@ -74,12 +74,11 @@ def newCycle_cpus():
 # -------- New Cycle Logic------------------------------
 
 
-def newCycle():
-    global memory_dict
+def manualGlobalCycle():
     if not loopCyclesFlag:
         newCycle_cpus()
     else:
-        printToConsole("Se encuentra activa la ejecución en ciclo.")
+        printToConsole("Activada la ejecucion en bucle")
 
 
 def changeLoopFlag():
@@ -89,7 +88,6 @@ def changeLoopFlag():
     if loopCyclesFlag:  # El programa está enciclado para leer nuevas instrucciones
         loop_button.config(image=loop_photoimage_detener)
         LoopExecution()
-
     else:
         loop_button.config(image=loop_photoimage_iniciar)
 
@@ -374,7 +372,7 @@ new_instruction_photoimage = tk.PhotoImage(file=r"images\button_nueva-instruccio
 new_instruction_button = tk.Button(
     buttons_frame,
     image=new_instruction_photoimage,
-    command=newCycle_cpus,
+    command=manualGlobalCycle,
     bg="white",
     borderwidth=0,
 )
