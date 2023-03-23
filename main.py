@@ -20,8 +20,8 @@ class CPU:
         message = self.newInstruction()
         printToConsole(message)
         window.after(
-            2000, self.start, window
-        )  # Llama a start_thread cada 2000 ms (2 segundos)
+            cycle_duration, self.start, window
+        )  # Llama a start_thread cada cycle_duration ms (2 segundos)
 
     def newInstruction(self):
         def binary(num, length=4):
@@ -86,7 +86,7 @@ def changeLoopFlag():
 def instructionsLoop():
     if loopInstructionsFlag:
         printToConsole("Hilo")
-        main.after(2000, instructionsLoop)
+        main.after(cycle_duration, instructionsLoop)
     else:
         return
 
@@ -261,6 +261,8 @@ cpus_dict = {
 cpus_list = [cpu0, cpu1, cpu2, cpu3]
 
 loopInstructionsFlag = False
+
+cycle_duration = 2000  # 2000 milisegundos = 2 segundos por ciclo
 
 # Main widget settings
 main = tk.Tk(className="Arquitectura de Computadores 2. Proyecto I")
