@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import scrolledtext
 import time
 
+
 # ----------------- Logic --------------------------------------------
 
 
@@ -14,6 +15,19 @@ class CPU:
             "B2": ["S", "000", 0x0000],
             "B3": ["S", "000", 0x0000],
         }
+
+    def start(self, window):
+        message = "CPU" + str(self.id)
+        printToConsole(message)
+        window.after(
+            2000, self.start, window
+        )  # Llama a start_thread cada 2000 ms (2 segundos)
+
+
+def start_all_Cpus():
+    global main, cpus_list
+    for cpu in cpus_list:
+        cpu.start(main)
 
 
 # -------- New Instruction Logic------------------------------
@@ -189,7 +203,7 @@ def render_cpu_cache(cpu, parent):
         y_pos += 50
 
 
-# Variables globales
+# -------------------------------Variables globales--------------------------------------------------
 
 # Memoria
 
@@ -218,6 +232,7 @@ cpus_dict = {
     "cpu3": cpu3,
 }
 
+cpus_list = [cpu0, cpu1, cpu2, cpu3]
 
 loopInstructionsFlag = False
 
@@ -377,5 +392,7 @@ render_CPU_info()
 
 
 main.protocol("WM_DELETE_WINDOW", close_app)
+
+start_all_Cpus()
 
 main.mainloop()
