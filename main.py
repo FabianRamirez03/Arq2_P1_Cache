@@ -62,6 +62,14 @@ class CPU:
             addr = binary(random.randint(0, 7), 3)
             return f"P{self.id}: READ {addr}"
 
+    def reset(self):
+        self.instruction = ""
+        self.resetCacheBlocks()
+
+    def resetCacheBlocks(self):
+        for block, cacheObject in self.cache.items():
+            cacheObject.reset()
+
 
 class CacheBlock:
     def __init__(self):
@@ -121,11 +129,22 @@ class CacheBlock:
     def print_state(self):
         print("Current state:", self.state)
 
+    def reset(self):
+        self.state = "Invalid"
+        self.memomy = "000"
+        self.data = 0x0000
+
 
 def newCycle_cpus():
     global main, cpus_list
     for cpu in cpus_list:
         cpu.executeCycle()
+
+
+def resetAllCpus():
+    global main, cpus_list
+    for cpu in cpus_list:
+        cpu.reset()
 
 
 # ------------- Instruction Generation ---------------------------
@@ -191,6 +210,8 @@ def resetProgram():
     # Clean and reset memory
     resetMemory()
     create_memory_table(memory_frame, ("Arial", 12), "white")
+    # Clean and reset cpus
+    resetAllCpus()
 
 
 def resetMemory():
@@ -283,7 +304,6 @@ def render_cpu_cache(cpu, parent):
     global cpus_dict
     cache = cpus_dict[cpu].cache
     y_pos = 100
-    x_pos = [70, 135, 185]
     for block, cacheObject in cache.items():
         blockName = tk.Label(
             parent,
