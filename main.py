@@ -13,10 +13,10 @@ class CPU:
         self.instruction = ""
         self.instDuration = 0
         self.cache = {
-            "B0": ["S", "000", 0x0000],
-            "B1": ["S", "000", 0x0000],
-            "B2": ["S", "000", 0x0000],
-            "B3": ["S", "000", 0x0000],
+            "B0": CacheBlock(),
+            "B1": CacheBlock(),
+            "B2": CacheBlock(),
+            "B3": CacheBlock(),
         }
 
     def executeCycle(self):
@@ -61,6 +61,65 @@ class CPU:
         else:
             addr = binary(random.randint(0, 7), 3)
             return f"P{self.id}: READ {addr}"
+
+
+class CacheBlock:
+    def __init__(self):
+        self.state = "Invalid"
+        self.memomy = "000"
+        self.data = 0x0000
+
+    def read(self):
+        if self.state == "Invalid":
+            print("Read miss")
+            self.state = "Shared"
+        elif self.state == "Exclusive":
+            print("Read hit")
+        else:
+            print("Read hit")
+
+    def write(self):
+        if self.state == "Invalid":
+            print("Write miss")
+            self.state = "Modified"
+        elif self.state == "Exclusive":
+            print("Write hit")
+            self.state = "Modified"
+        elif self.state == "Shared":
+            print("Write miss")
+            self.state = "Modified"
+        elif self.state == "Owned":
+            print("Write miss")
+            self.state = "Modified"
+        else:
+            print("Write hit")
+
+    def bus_read(self):
+        if self.state == "Invalid":
+            pass
+        elif self.state == "Exclusive":
+            self.state = "Shared"
+        elif self.state == "Owned":
+            pass
+        elif self.state == "Modified":
+            print("Bus read miss")
+            self.state = "Owned"
+
+    def bus_write(self):
+        if self.state == "Invalid":
+            pass
+        elif self.state == "Exclusive":
+            self.state = "Invalid"
+        elif self.state == "Shared":
+            self.state = "Invalid"
+        elif self.state == "Owned":
+            self.state = "Invalid"
+        elif self.state == "Modified":
+            print("Bus write miss")
+            self.state = "Invalid"
+
+    def print_state(self):
+        print("Current state:", self.state)
 
 
 def newCycle_cpus():
@@ -225,7 +284,7 @@ def render_cpu_cache(cpu, parent):
     cache = cpus_dict[cpu].cache
     y_pos = 100
     x_pos = [70, 135, 185]
-    for block, values in cache.items():
+    for block, cacheObject in cache.items():
         blockName = tk.Label(
             parent,
             text=block,
@@ -234,20 +293,33 @@ def render_cpu_cache(cpu, parent):
             justify="center",
         )
         blockName.place(x=10, y=y_pos)
-        cont = 0
-        for data in values:
-            if cont == 2:
-                data = format(data, "04X")
-            label = tk.Label(
-                parent,
-                text=data,
-                font=("Arial", 10),
-                bg="white",
-                justify="center",
-            )
-            label.place(x=x_pos[cont], y=y_pos)
 
-            cont += 1
+        Statelabel = tk.Label(
+            parent,
+            text=cacheObject.state,
+            font=("Arial", 10),
+            bg="white",
+            justify="center",
+        )
+        Statelabel.place(x=60, y=y_pos)
+
+        Memlabel = tk.Label(
+            parent,
+            text=cacheObject.memomy,
+            font=("Arial", 10),
+            bg="white",
+            justify="center",
+        )
+        Memlabel.place(x=135, y=y_pos)
+
+        Datalabel = tk.Label(
+            parent,
+            text=format(cacheObject.data, "04X"),
+            font=("Arial", 10),
+            bg="white",
+            justify="center",
+        )
+        Datalabel.place(x=185, y=y_pos)
         y_pos += 50
 
 
