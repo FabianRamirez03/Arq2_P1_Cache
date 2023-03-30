@@ -139,6 +139,7 @@ def newCycle_cpus():
     global main, cpus_list
     for cpu in cpus_list:
         cpu.executeCycle()
+    render_CPU_info()
 
 
 def resetAllCpus():
@@ -212,6 +213,7 @@ def resetProgram():
     create_memory_table(memory_frame, ("Arial", 12), "white")
     # Clean and reset cpus
     resetAllCpus()
+    render_CPU_info()
 
 
 def resetMemory():
@@ -268,11 +270,18 @@ def render_CPU_info():
         "cpu3": cpu3_frame,
     }
     for cpu, parent in cpus_frames.items():
-        render_cpu_headers(parent)
+        clean_frame(parent)
+        render_cpu_headers(cpu, parent)
         render_cpu_cache(cpu, parent)
 
 
-def render_cpu_headers(parent):
+def render_cpu_headers(cpu, parent):
+    global cpus_dict
+    Titlelabel = tk.Label(
+        parent, text="CPU " + str(cpus_dict[cpu].id), font=("Arial", 24), bg="white"
+    )
+    Titlelabel.place(x=60, y=10)
+
     stateLabel = tk.Label(
         parent,
         text="Estado\nCoherencia",
@@ -340,7 +349,26 @@ def render_cpu_cache(cpu, parent):
             justify="center",
         )
         Datalabel.place(x=185, y=y_pos)
+
+        instructionText = cpus_dict[cpu].instruction
+        if instructionText != "":
+            instructionText = instructionText[4:]
+        Instructionlabel = tk.Label(
+            parent,
+            text="Instruction: " + instructionText,
+            font=("Arial", 10),
+            bg="white",
+            justify="center",
+        )
+        Instructionlabel.place(x=20, y=275)
+
         y_pos += 50
+
+
+def clean_frame(frame):
+    # Eliminar todos los widgets del frame
+    for widget in frame.winfo_children():
+        widget.destroy()
 
 
 # -------------------------------Variables globales--------------------------------------------------
@@ -516,18 +544,6 @@ create_memory_table(memory_frame, ("Arial", 12), "white")
 
 
 # ----------------------------CPU labels----------------------------------
-
-cpu0_title_label = tk.Label(cpu0_frame, text="CPU 0", font=("Arial", 24), bg="white")
-cpu0_title_label.place(x=60, y=10)
-
-cpu1_title_label = tk.Label(cpu1_frame, text="CPU 1", font=("Arial", 24), bg="white")
-cpu1_title_label.place(x=60, y=10)
-
-cpu2_title_label = tk.Label(cpu2_frame, text="CPU 2", font=("Arial", 24), bg="white")
-cpu2_title_label.place(x=60, y=10)
-
-cpu3_title_label = tk.Label(cpu3_frame, text="CPU 3", font=("Arial", 24), bg="white")
-cpu3_title_label.place(x=60, y=10)
 
 render_CPU_info()
 
