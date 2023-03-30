@@ -409,7 +409,7 @@ cycle_duration = 2000  # 2000 milisegundos = 2 segundos por ciclo
 
 # Main widget settings
 
-main.geometry("900x500")
+main.geometry("900x400")
 main.resizable(False, False)
 
 # Framing
@@ -464,8 +464,6 @@ cpu3_frame = tk.Frame(
 )
 cpu3_frame.place(x=675, y=0)
 
-bus_frame = tk.Frame(main_frame, bg="LightSeaGreen", height=100, width=900)
-bus_frame.place(x=0, y=300)
 
 botton_frame = tk.Frame(
     main_frame,
@@ -475,7 +473,7 @@ botton_frame = tk.Frame(
     borderwidth=1,
     relief="ridge",
 )
-botton_frame.place(x=0, y=400)
+botton_frame.place(x=0, y=300)
 
 memory_frame = tk.Frame(botton_frame, bg="white", height=100, width=420)
 memory_frame.place(x=0, y=0)
