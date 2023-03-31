@@ -11,12 +11,17 @@ class CPU:
     def __init__(self, id: int):
         self.id = id
         self.instruction = ""
+        self.instructionList = []
         self.instDuration = 0
         self.cache = {
-            "B0": CacheBlock(),
-            "B1": CacheBlock(),
-            "B2": CacheBlock(),
-            "B3": CacheBlock(),
+            "B0": CacheBlock(self.id),
+            "B1": CacheBlock(self.id),
+            "B2": CacheBlock(self.id),
+            "B3": CacheBlock(self.id),
+        }
+        self.parity = {
+            "0": [self.cache["B0"], self.cache["B1"]],
+            "1": [self.cache["B2"], self.cache["B3"]],
         }
 
     def executeCycle(self):
@@ -27,17 +32,39 @@ class CPU:
 
     def generateNewInstruction(self):
         self.instruction = self.newInstruction()
-        self.instDuration = random.randint(1, 5)
-        printToConsole(
-            f"Instruction {self.instruction} generated. Duration: {self.instDuration}"
-        )
+        self.instructionList = self.createListFromInstruction(self.instruction)
+        self.instDuration = self.setInstructionLenght(self.instructionList)
 
     def executeInstruction(self):
+        # 1 = calc
+        # 2 = read
+        # 3 = write
+        inst_type = len(self.instructionList)
+
+        # Calc
+        if inst_type == 1:
+            self.instDuration = 0
+
         if self.instDuration == 0:
-            printToConsole(f"Instruction {self.instruction} completed")
             self.instruction = ""
+        # Read
+        elif inst_type == 2:
+            mem_dir = self.instructionList[1]
+            self.executeRead(mem_dir)
+
         else:
             self.instDuration -= 1
+
+    def setInstructionLenght(self, instructionList):
+        inst_type = len(instructionList)
+        # Calc Instruction
+        if inst_type == 1:
+            return 0
+        # Read Instruction
+        if inst_type == 2:
+            return 5
+        else:
+            return 1
 
     def newInstruction(self):
         def binary(num, length=4):
@@ -70,14 +97,143 @@ class CPU:
         for block, cacheObject in self.cache.items():
             cacheObject.reset()
 
+    def createListFromInstruction(self, instruction):
+        # Dividimos la cadena en palabras utilizando split()
+        values = instruction.split()
+        # Eliminamos el primer elemento de la lista (Pn:)
+        del values[0]
+        # Retornamos la lista modificada
+        return values
+
+    # Read logic -------------------------------------------------------------------------
+
+    def executeRead(self, mem_dir):
+        # Checkea si es un readMiss o si tengo el dato
+        if self.instDuration == 5:
+            printToConsole(f"Paso 5. Mem {mem_dir}")
+            self.read_CheckMiss(mem_dir)
+            return
+        elif self.instDuration == 4:
+            printToConsole(f"Paso 4. Mem {mem_dir}")
+            self.read_missDetected(mem_dir)
+            return
+        elif self.instDuration == 3:
+            printToConsole(f"Paso 3. Mem {mem_dir}")
+            self.read_searchDataInOtherCPU(mem_dir)
+            return
+        elif self.instDuration == 2:
+            printToConsole(f"Paso 2. Mem {mem_dir}")
+            self.read_loadDataFromMemory(mem_dir)
+            return
+        # Tiene el dato y no es invalido, solamente lo lee
+        elif self.instDuration == 1:
+            printToConsole(f"Paso 1. Mem {mem_dir}")
+            self.instDuration = 0
+            return
+        # Doy por finalizada la ejecución
+        elif self.instDuration == 0:
+            printToConsole(f"Paso 0. Mem {mem_dir}")
+            self.instruction == ""
+            return
+
+    def removeCacheBlockFromBus(self, mem_dir, cacheBlock):
+
+        global bus_dict
+        try:
+            bus_dict[mem_dir].remove(cacheBlock)
+        except ValueError:
+            printToConsole(
+                f"No existe un bloque {cacheBlock.memory} en el CPU{cacheBlock.cpuID}."
+            )
+
+    def addBlockToBus(self, mem_dir: str, cacheBlock):
+        global bus_dict
+        if cacheBlock not in bus_dict[mem_dir]:
+            bus_dict[mem_dir].append(cacheBlock)
+        else:
+            print(f"El dato ya se encuentra en cache del CPU{cacheBlock.cpuID}")
+
+    def read_searchDataInOtherCPU(self, mem_dir):
+        global bus_dict
+        bus_dir_reg = bus_dict[mem_dir]
+        try:
+            for block in bus_dir_reg:
+                if block.memory == mem_dir and block.state != "Invalid":
+                    # Exclusive -> Shared
+                    if block.state == "Exclusive":
+                        insertedBlock = self.read_loadData(
+                            "Shared", mem_dir, block.data
+                        )
+                        block.state = "Shared"
+                        self.addBlockToBus(mem_dir, insertedBlock)
+                    # Modified -> Owned
+                    elif block.state == "Modified":
+                        insertedBlock = self.read_loadData(
+                            "Shared", mem_dir, block.data
+                        )
+                        block.state = "Owned"
+                        self.addBlockToBus(mem_dir, insertedBlock)
+                    # Shared -> Shared
+                    else:
+                        pass
+        except:
+            printToConsole(bus_dir_reg)
+        # Finalizo la lectura
+        self.instDuration = 0
+
+    def read_loadData(self, state, mem_dir, data):
+        global bus_dict
+        last_caracter = mem_dir[-1]
+        parityBlocks = self.parity[last_caracter]
+        # Intenta ingresa el dato a un bloque con información inválida primeramente.
+        for block in parityBlocks:
+            if block.state == "Invalid":
+                self.removeCacheBlockFromBus(mem_dir, block)
+                block.state = state
+                block.memory = mem_dir
+                block.data = data
+                return block
+
+    def read_missDetected(self, mem_dir):
+        global bus_dict
+        bus_dir_reg = bus_dict[mem_dir]
+        # Si nadie tiene el dato, lo traigo de memoria
+        if len(bus_dir_reg) == 0:
+            self.instDuration = 2
+        # Si no, busco quien lo tiene:
+        else:
+            self.instDuration = 3
+
+    def read_CheckMiss(self, mem_dir):
+        last_caracter = mem_dir[-1]
+        parityBlocks = self.parity[last_caracter]
+        Changeflag = False
+        for cacheBlock in parityBlocks:
+            if cacheBlock.memory == mem_dir and cacheBlock.state != "Invalid":
+                self.instDuration = 1
+                Changeflag = True
+
+        # Detecta el cache miss ya que no tiene el valor en memoria o lo tiene y es inválido
+        if not Changeflag:
+            self.instDuration = 4
+
+    def read_loadDataFromMemory(self, mem_dir):
+        global memory_dict
+        data = memory_dict[mem_dir]
+        insertedBlock = self.read_loadData("Exclusive", mem_dir, data)
+        self.addBlockToBus(mem_dir, insertedBlock)
+        # Finaliza el ciclo de ejecución
+        self.instDuration = 0
+
 
 class CacheBlock:
-    def __init__(self):
+    def __init__(self, cpuID):
         self.state = "Invalid"
-        self.memomy = "000"
+        self.memory = "000"
         self.data = 0x0000
+        self.cpuID = cpuID
 
-    def read(self):
+    def read(self, instructionsList):
         if self.state == "Invalid":
             print("Read miss")
             self.state = "Shared"
@@ -131,7 +287,7 @@ class CacheBlock:
 
     def reset(self):
         self.state = "Invalid"
-        self.memomy = "000"
+        self.memory = "000"
         self.data = 0x0000
 
 
@@ -334,7 +490,7 @@ def render_cpu_cache(cpu, parent):
 
         Memlabel = tk.Label(
             parent,
-            text=cacheObject.memomy,
+            text=cacheObject.memory,
             font=("Arial", 10),
             bg="white",
             justify="center",
@@ -372,6 +528,19 @@ def clean_frame(frame):
 
 
 # -------------------------------Variables globales--------------------------------------------------
+
+# Bus
+
+bus_dict = {
+    "000": [],
+    "001": [],
+    "010": [],
+    "011": [],
+    "100": [],
+    "101": [],
+    "110": [],
+    "111": [],
+}
 
 # Memoria
 
