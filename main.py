@@ -12,7 +12,7 @@ class CPU:
         self.id = id
         self.instruction = ""
         self.instructionList = []
-        self.instDuration = 0
+        self.instruction_Step = 0
         self.cache = {
             "B0": CacheBlock(self.id),
             "B1": CacheBlock(self.id),
@@ -33,7 +33,7 @@ class CPU:
     def generateNewInstruction(self):
         self.instruction = self.newInstruction()
         self.instructionList = self.createListFromInstruction(self.instruction)
-        self.instDuration = self.setInstructionLenght(self.instructionList)
+        self.instruction_Step = self.setInstructionLenght(self.instructionList)
 
     def executeInstruction(self):
         # 1 = calc
@@ -43,9 +43,9 @@ class CPU:
 
         # Calc
         if inst_type == 1:
-            self.instDuration = 0
+            self.instruction_Step = 0
 
-        if self.instDuration == 0:
+        if self.instruction_Step == 0:
             self.instruction = ""
         # Read
         elif inst_type == 2:
@@ -53,7 +53,7 @@ class CPU:
             self.executeRead(mem_dir)
 
         else:
-            self.instDuration -= 1
+            self.instruction_Step -= 1
 
     def setInstructionLenght(self, instructionList):
         inst_type = len(instructionList)
@@ -109,29 +109,29 @@ class CPU:
 
     def executeRead(self, mem_dir):
         # Checkea si es un readMiss o si tengo el dato
-        if self.instDuration == 5:
+        if self.instruction_Step == 5:
             printToConsole(f"Paso 5. Mem {mem_dir}")
             self.read_CheckMiss(mem_dir)
             return
-        elif self.instDuration == 4:
+        elif self.instruction_Step == 4:
             printToConsole(f"Paso 4. Mem {mem_dir}")
             self.read_missDetected(mem_dir)
             return
-        elif self.instDuration == 3:
+        elif self.instruction_Step == 3:
             printToConsole(f"Paso 3. Mem {mem_dir}")
             self.read_searchDataInOtherCPU(mem_dir)
             return
-        elif self.instDuration == 2:
+        elif self.instruction_Step == 2:
             printToConsole(f"Paso 2. Mem {mem_dir}")
             self.read_loadDataFromMemory(mem_dir)
             return
         # Tiene el dato y no es invalido, solamente lo lee
-        elif self.instDuration == 1:
+        elif self.instruction_Step == 1:
             printToConsole(f"Paso 1. Mem {mem_dir}")
-            self.instDuration = 0
+            self.instruction_Step = 0
             return
         # Doy por finalizada la ejecución
-        elif self.instDuration == 0:
+        elif self.instruction_Step == 0:
             printToConsole(f"Paso 0. Mem {mem_dir}")
             self.instruction == ""
             return
@@ -179,7 +179,7 @@ class CPU:
         except:
             printToConsole(bus_dir_reg)
         # Finalizo la lectura
-        self.instDuration = 0
+        self.instruction_Step = 0
 
     def read_loadData(self, state, mem_dir, data):
         global bus_dict
@@ -199,10 +199,10 @@ class CPU:
         bus_dir_reg = bus_dict[mem_dir]
         # Si nadie tiene el dato, lo traigo de memoria
         if len(bus_dir_reg) == 0:
-            self.instDuration = 2
+            self.instruction_Step = 2
         # Si no, busco quien lo tiene:
         else:
-            self.instDuration = 3
+            self.instruction_Step = 3
 
     def read_CheckMiss(self, mem_dir):
         last_caracter = mem_dir[-1]
@@ -210,12 +210,12 @@ class CPU:
         Changeflag = False
         for cacheBlock in parityBlocks:
             if cacheBlock.memory == mem_dir and cacheBlock.state != "Invalid":
-                self.instDuration = 1
+                self.instruction_Step = 1
                 Changeflag = True
 
         # Detecta el cache miss ya que no tiene el valor en memoria o lo tiene y es inválido
         if not Changeflag:
-            self.instDuration = 4
+            self.instruction_Step = 4
 
     def read_loadDataFromMemory(self, mem_dir):
         global memory_dict
@@ -223,7 +223,7 @@ class CPU:
         insertedBlock = self.read_loadData("Exclusive", mem_dir, data)
         self.addBlockToBus(mem_dir, insertedBlock)
         # Finaliza el ciclo de ejecución
-        self.instDuration = 0
+        self.instruction_Step = 0
 
 
 class CacheBlock:
@@ -293,6 +293,7 @@ class CacheBlock:
 
 def newCycle_cpus():
     global main, cpus_list
+    printToConsole("------------------------------------------------")
     for cpu in cpus_list:
         cpu.executeCycle()
     render_CPU_info()
