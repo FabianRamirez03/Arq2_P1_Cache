@@ -51,9 +51,12 @@ class CPU:
         elif inst_type == 2:
             mem_dir = self.instructionList[1]
             self.executeRead(mem_dir)
-
+        # Write
         else:
-            self.instruction_Step -= 1
+            mem_dir = self.instructionList[1]
+            data = self.instructionList[2]
+            data = int(data, 16)
+            self.executeWrite(mem_dir, data)
 
     def setInstructionLenght(self, instructionList):
         inst_type = len(instructionList)
@@ -63,8 +66,9 @@ class CPU:
         # Read Instruction
         if inst_type == 2:
             return 5
+        # Write Instruction
         else:
-            return 1
+            return 6
 
     def newInstruction(self):
         def binary(num, length=4):
@@ -110,29 +114,31 @@ class CPU:
     def executeRead(self, mem_dir):
         # Checkea si es un readMiss o si tengo el dato
         if self.instruction_Step == 5:
-            printToConsole(f"Paso 5. Mem {mem_dir}")
+            printToConsole(f"CPU{self.id}: Ejecutando instruccion: {self.instruction}")
             self.read_CheckMiss(mem_dir)
             return
+        # Es un read Miss
         elif self.instruction_Step == 4:
-            printToConsole(f"Paso 4. Mem {mem_dir}")
+            printToConsole(f"CPU{self.id}: Read miss")
             self.read_missDetected(mem_dir)
             return
+        # El dato está en otro CPU. Lo busca ahí
         elif self.instruction_Step == 3:
-            printToConsole(f"Paso 3. Mem {mem_dir}")
             self.read_searchDataInOtherCPU(mem_dir)
             return
+        # El dato no está en otro CPU. Lo busca en memoria
         elif self.instruction_Step == 2:
-            printToConsole(f"Paso 2. Mem {mem_dir}")
             self.read_loadDataFromMemory(mem_dir)
             return
         # Tiene el dato y no es invalido, solamente lo lee
         elif self.instruction_Step == 1:
-            printToConsole(f"Paso 1. Mem {mem_dir}")
             self.instruction_Step = 0
             return
-        # Doy por finalizada la ejecución
+        # Da por finalizada la ejecución
         elif self.instruction_Step == 0:
-            printToConsole(f"Paso 0. Mem {mem_dir}")
+            printToConsole(
+                f"CPU{self.id}: Finalizada Instrucción instruccion: {self.instruction}"
+            )
             self.instruction == ""
             return
 
@@ -187,7 +193,7 @@ class CPU:
         parityBlocks = self.parity[last_caracter]
         # Intenta ingresa el dato a un bloque con información inválida primeramente.
         for block in parityBlocks:
-            if block.state == "Invalid":
+            if block.state in ("Invalid", "Shared"):
                 self.removeCacheBlockFromBus(mem_dir, block)
                 block.state = state
                 block.memory = mem_dir
@@ -207,14 +213,14 @@ class CPU:
     def read_CheckMiss(self, mem_dir):
         last_caracter = mem_dir[-1]
         parityBlocks = self.parity[last_caracter]
-        Changeflag = False
+        miss_flag = False
         for cacheBlock in parityBlocks:
             if cacheBlock.memory == mem_dir and cacheBlock.state != "Invalid":
                 self.instruction_Step = 1
-                Changeflag = True
+                miss_flag = True
 
         # Detecta el cache miss ya que no tiene el valor en memoria o lo tiene y es inválido
-        if not Changeflag:
+        if not miss_flag:
             self.instruction_Step = 4
 
     def read_loadDataFromMemory(self, mem_dir):
@@ -225,6 +231,176 @@ class CPU:
         # Finaliza el ciclo de ejecución
         self.instruction_Step = 0
 
+    # write logic -------------------------------------------------------------------------
+
+    def executeWrite(self, mem_dir, data):
+        # Checkea si es un writeMiss o si tengo el dato
+        if self.instruction_Step == 6:
+            printToConsole(f"CPU{self.id}: Ejecutando instruccion: {self.instruction}")
+            self.write_CheckMiss(mem_dir)
+            return
+        # No tengo el dato, checkeo si alguien más lo tiene
+        elif self.instruction_Step == 5:
+            printToConsole(f"CPU{self.id}: Write miss")
+            self.write_missedCheckOthers(mem_dir)
+            return
+        # Tengo el dato pero no está invalidado. Si lo tengo pero es S, E, M o O, puedo modificarlo de nuevo, solamente invalidando el resto de ser necesario
+        elif self.instruction_Step == 4:
+            self.write_notMissedNotInvalid(mem_dir, data)
+            return
+        # Nadie tiene el dato, lo cargo de memoria
+        elif self.instruction_Step == 3:
+            self.write_NobodyHasIt_LoadFromMemory(mem_dir, data)
+            return
+        # Alguien tiene el dato, lo cargo de otro CPU
+        elif self.instruction_Step == 2:
+            self.write_SomebodyHasIt_LoadFromThere(mem_dir, data)
+            return
+        # Tengo el dato pero está invalidado. Doy por hecho que alguien más lo tiene porque me invalidó mi dato
+        elif self.instruction_Step == 1:
+            self.write_notMissedButInvalid(mem_dir, data)
+            return
+        # Doy por finalizada la ejecución
+        elif self.instruction_Step == 0:
+            self.instruction == ""
+            return
+
+    # 6
+    # Checkea si es un writeMiss o si tengo el dato
+    def write_CheckMiss(self, mem_dir):
+        last_caracter = mem_dir[-1]
+        parityBlocks = self.parity[last_caracter]
+        blocks_list = []
+        for cacheBlock in parityBlocks:
+            if cacheBlock.memory == mem_dir:
+                blocks_list.append(cacheBlock)
+
+        # Si no lo tengo cargado, voy al paso 5
+        if len(blocks_list) == 0:
+            self.instruction_Step = 5
+            return
+        else:
+            for block in blocks_list:
+                # Si tengo el bloque pero está invalidado, voy al paso 1
+                if block.state == "Invalid":
+                    self.instruction_Step = 1
+                    return
+
+            # Si tengo el bloque pero no está Invalido (M, O, E, S) voy al paso 4
+            self.instruction_Step = 4
+            return
+
+    # 5
+    # No tengo el dato, checkeo si alguien más lo tiene
+    def write_missedCheckOthers(self, mem_dir):
+        global bus_dict
+        register_list = bus_dict[mem_dir]
+        # Si nadie tiene el dato
+        if len(register_list) == 0:
+            self.instruction_Step = 3
+            return
+        # alguien tiene el dato
+        else:
+            self.instruction_Step = 2
+            return
+
+    # 4
+    # Tengo el dato pero no está invalidado. Si lo tengo pero es S, E, M o O, puedo modificarlo de nuevo, solamente invalidando el resto de ser necesario
+    def write_notMissedNotInvalid(self, mem_dir, data):
+        last_caracter = mem_dir[-1]
+        parityBlocks = self.parity[last_caracter]
+        #
+        for cacheBlock in parityBlocks:
+            if cacheBlock.memory == mem_dir and cacheBlock.state in (
+                "Shared",
+                "Exclusive",
+                "Modified",
+                "Owned",
+            ):
+                # Escribo el dato en Memoria
+                cacheBlock.writeInMemory()
+                # Invalido el resto de CPUs
+                self.write_invalidOthers(mem_dir)
+                # Actualizo el estado de mi cache
+                cacheBlock.update("Modified", mem_dir, data)
+        # Finalizo la ejecución
+        self.instruction_Step = 0
+        return
+
+    # 3
+    # Nadie tiene el dato, lo cargo de memoria
+    def write_NobodyHasIt_LoadFromMemory(self, mem_dir, data):
+        global memory_dict
+        # Selecciono el bloque en el que insertaré el dato
+        insertedBlock = self.write_loadData("Modified", mem_dir, data)
+        self.addBlockToBus(mem_dir, insertedBlock)
+        # Finaliza el ciclo de ejecución
+        self.instruction_Step = 0
+        return
+
+    # 2
+    # Alguien lo tiene, Modifico e invalido
+    def write_SomebodyHasIt_LoadFromThere(self, mem_dir, data):
+        global bus_dict
+        register_list = bus_dict[mem_dir]
+        for block in register_list:
+            if block.state in ("Modified", "Owned", "Exclusive"):
+                # Escribo el valor en el otro CPU en memoria
+                block.writeInMemory()
+                # Invalido el resto de CPUs
+                self.write_invalidOthers(mem_dir)
+
+        # Selecciono el bloque en el que insertaré el dato
+        insertedBlock = self.write_loadData("Modified", mem_dir, data)
+        # Actualizo el estado del bus
+        self.addBlockToBus(mem_dir, insertedBlock)
+
+        self.instruction_Step = 0
+        return
+
+    # 1
+    # Tengo el dato pero está invalidado. Doy por hecho que alguien más lo tiene porque me invalidó mi dato
+    def write_notMissedButInvalid(self, mem_dir, data):
+        global bus_dict
+        register_list = bus_dict[mem_dir]
+        # Escribo el dato en memoria del dato que lo haya modificado
+        for block in register_list:
+            if block.state in ("Modified", "Owned", "Exclusive"):
+                block.writeInMemory()
+
+        # Invalido el resto de CPUs
+        self.write_invalidOthers(mem_dir)
+
+        # Actualizo el estado de mi cache
+        last_caracter = mem_dir[-1]
+        parityBlocks = self.parity[last_caracter]
+        for block in parityBlocks:
+            if block.memory == mem_dir:
+                block.update("Modified", mem_dir, data)
+
+        # Finalizo la ejecución
+        self.instruction_Step = 0
+        return
+
+    def write_loadData(self, state, mem_dir, data):
+        global bus_dict
+        last_caracter = mem_dir[-1]
+        parityBlocks = self.parity[last_caracter]
+        # Intenta ingresa el dato a un bloque con información inválida primeramente.
+        for block in parityBlocks:
+            if block.state in ("Invalid", "Shared"):
+                self.removeCacheBlockFromBus(mem_dir, block)
+                block.state = state
+                block.memory = mem_dir
+                block.data = data
+                return block
+
+    def write_invalidOthers(self, mem_dir):
+        global bus_dict
+        register_list = bus_dict[mem_dir]
+        for block in register_list:
+            block.state = "Invalid"
+
 
 class CacheBlock:
     def __init__(self, cpuID):
@@ -233,57 +409,17 @@ class CacheBlock:
         self.data = 0x0000
         self.cpuID = cpuID
 
-    def read(self, instructionsList):
-        if self.state == "Invalid":
-            print("Read miss")
-            self.state = "Shared"
-        elif self.state == "Exclusive":
-            print("Read hit")
-        else:
-            print("Read hit")
-
-    def write(self):
-        if self.state == "Invalid":
-            print("Write miss")
-            self.state = "Modified"
-        elif self.state == "Exclusive":
-            print("Write hit")
-            self.state = "Modified"
-        elif self.state == "Shared":
-            print("Write miss")
-            self.state = "Modified"
-        elif self.state == "Owned":
-            print("Write miss")
-            self.state = "Modified"
-        else:
-            print("Write hit")
-
-    def bus_read(self):
-        if self.state == "Invalid":
-            pass
-        elif self.state == "Exclusive":
-            self.state = "Shared"
-        elif self.state == "Owned":
-            pass
-        elif self.state == "Modified":
-            print("Bus read miss")
-            self.state = "Owned"
-
-    def bus_write(self):
-        if self.state == "Invalid":
-            pass
-        elif self.state == "Exclusive":
-            self.state = "Invalid"
-        elif self.state == "Shared":
-            self.state = "Invalid"
-        elif self.state == "Owned":
-            self.state = "Invalid"
-        elif self.state == "Modified":
-            print("Bus write miss")
-            self.state = "Invalid"
+    def writeInMemory(self):
+        global memory_dict
+        memory_dict[self.memory] = self.data
 
     def print_state(self):
         print("Current state:", self.state)
+
+    def update(self, state, memory, data):
+        self.state = state
+        self.memory = memory
+        self.data = data
 
     def reset(self):
         self.state = "Invalid"
@@ -297,6 +433,7 @@ def newCycle_cpus():
     for cpu in cpus_list:
         cpu.executeCycle()
     render_CPU_info()
+    create_memory_table(memory_frame, ("Arial", 12), "white")
 
 
 def resetAllCpus():
@@ -504,7 +641,6 @@ def render_cpu_cache(cpu, parent):
             justify="center",
         )
         Memlabel.place(x=135, y=y_pos)
-
         Datalabel = tk.Label(
             parent,
             text=format(cacheObject.data, "04X"),
