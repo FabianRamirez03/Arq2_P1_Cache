@@ -75,7 +75,7 @@ class CPU:
 
         # Distribución de probabilidad
         p_calc = 1 / 5
-        p_write = 2 / 3
+        p_write = 2 / 5
 
         r = random.random()
 
@@ -364,6 +364,7 @@ def resetProgram():
     # Set the loop logic to false
     loopCyclesFlag = False
     loop_button.config(image=loop_photoimage_iniciar)
+    resetBusRegister()
     cleanConsole()
     # Clean and reset memory
     resetMemory()
@@ -378,6 +379,12 @@ def resetMemory():
     for i in range(8):
         bin_key = format(i, "03b")
         memory_dict[bin_key] = 0x0
+
+
+def resetBusRegister():
+    global bus_dict
+    for register, lista in bus_dict.items():
+        lista = []
 
 
 def close_app():
