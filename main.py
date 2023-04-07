@@ -701,11 +701,13 @@ pop_up_flag = True
 
 
 def open_popup():
-    global pop_up_flag
-    if pop_up_flag:
+    global pop_up_flag, loopCyclesFlag
+    if pop_up_flag and not loopCyclesFlag:
         pop_up_flag = False
         generate_instruction_popup()
     else:
+        if loopCyclesFlag:
+            printToConsole("Error: El programa se encuentra en modo ciclo")
         return
 
 
