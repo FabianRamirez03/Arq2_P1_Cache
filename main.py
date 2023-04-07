@@ -155,9 +155,11 @@ class CPU:
 
     def removeCacheBlockFromBus(self, mem_dir, cacheBlock):
 
-        global bus_dict
+        global bus_dict, bus_dict_quantity
         try:
             bus_dict[mem_dir].remove(cacheBlock)
+            # Resto uno a la cantidad de procesadores que poseen el dato
+            bus_dict_quantity[mem_dir] -= 1
         except ValueError:
             printToConsole(
                 f"No existe un bloque {cacheBlock.memory} en el CPU{cacheBlock.cpuID}."
@@ -170,6 +172,8 @@ class CPU:
         else:
             print(f"El dato ya se encuentra en cache del CPU{cacheBlock.cpuID}")
 
+    # 3
+    #  El dato está en otro CPU. Lo busca ahí
     def read_searchDataInOtherCPU(self, mem_dir):
         global bus_dict
         bus_dir_reg = bus_dict[mem_dir]
@@ -211,16 +215,21 @@ class CPU:
                 block.data = data
                 return block
 
+    # 4
+    # Es un read Miss
     def read_missDetected(self, mem_dir):
-        global bus_dict
-        bus_dir_reg = bus_dict[mem_dir]
-        # Si nadie tiene el dato, lo traigo de memoria
-        if len(bus_dir_reg) == 0:
+        global bus_dict_quantity
+        # Sé que tendré el dato, sumo uno a la cantidad de procesadores que poseen el dato
+        bus_dict_quantity[mem_dir] += 1
+        # Si solo lo tendré yo, lo traigo de memoria
+        if bus_dict_quantity[mem_dir] == 1:
             self.instruction_Step = 2
         # Si no, busco quien lo tiene:
         else:
             self.instruction_Step = 3
 
+    # 5
+    # Checkea si es un readMiss o si tengo el dato
     def read_CheckMiss(self, mem_dir):
         last_caracter = mem_dir[-1]
         parityBlocks = self.parity[last_caracter]
@@ -234,6 +243,8 @@ class CPU:
         if not miss_flag:
             self.instruction_Step = 4
 
+    # 2
+    # El dato no está en otro CPU. Lo busca en memoria
     def read_loadDataFromMemory(self, mem_dir):
         global memory_dict
         data = memory_dict[mem_dir]
@@ -852,6 +863,18 @@ bus_dict = {
     "110": [],
     "111": [],
 }
+
+bus_dict_quantity = {
+    "000": 0,
+    "001": 0,
+    "010": 0,
+    "011": 0,
+    "100": 0,
+    "101": 0,
+    "110": 0,
+    "111": 0,
+}
+
 
 # Memoria
 
