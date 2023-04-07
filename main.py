@@ -156,14 +156,13 @@ class CPU:
     def removeCacheBlockFromBus(self, mem_dir, cacheBlock):
 
         global bus_dict, bus_dict_quantity
+        # Resto uno a la cantidad de procesadores que poseen el dato
+
         try:
             bus_dict[mem_dir].remove(cacheBlock)
-            # Resto uno a la cantidad de procesadores que poseen el dato
             bus_dict_quantity[mem_dir] -= 1
         except ValueError:
-            printToConsole(
-                f"No existe un bloque {cacheBlock.memory} en el CPU{cacheBlock.cpuID}."
-            )
+            return
 
     def addBlockToBus(self, mem_dir: str, cacheBlock):
         global bus_dict
@@ -175,11 +174,15 @@ class CPU:
     # 3
     #  El dato está en otro CPU. Lo busca ahí
     def read_searchDataInOtherCPU(self, mem_dir):
+        printToConsole(f"CPU{self.id}: Read buscando el dato en otro CPU")
         global bus_dict
         bus_dir_reg = bus_dict[mem_dir]
         try:
             for block in bus_dir_reg:
                 if block.memory == mem_dir and block.state != "Invalid":
+                    printToConsole(
+                        f"cpu{self.id}: block state: {block.state} CPUID: {block.cpuID}"
+                    )
                     # Exclusive -> Shared
                     if block.state == "Exclusive":
                         insertedBlock = self.read_loadData(
@@ -208,7 +211,16 @@ class CPU:
         parityBlocks = self.parity[last_caracter]
         # Intenta ingresa el dato a un bloque con información inválida primeramente.
         for block in parityBlocks:
-            if block.state in ("Invalid", "Shared"):
+            if block.state in ("Invalid", "Shared", "Exclusive"):
+                self.removeCacheBlockFromBus(mem_dir, block)
+                block.state = state
+                block.memory = mem_dir
+                block.data = data
+                return block
+        for block in parityBlocks:
+            printToConsole
+            if block.state in ("Modified"):
+                block.writeInMemory()
                 self.removeCacheBlockFromBus(mem_dir, block)
                 block.state = state
                 block.memory = mem_dir
@@ -222,6 +234,8 @@ class CPU:
         # Sé que tendré el dato, sumo uno a la cantidad de procesadores que poseen el dato
         bus_dict_quantity[mem_dir] += 1
         # Si solo lo tendré yo, lo traigo de memoria
+        printToConsole(f"{self.instruction} {bus_dict_quantity[mem_dir]}")
+        print(bus_dict_quantity)
         if bus_dict_quantity[mem_dir] == 1:
             self.instruction_Step = 2
         # Si no, busco quien lo tiene:
@@ -317,10 +331,12 @@ class CPU:
     # 5
     # No tengo el dato, checkeo si alguien más lo tiene
     def write_missedCheckOthers(self, mem_dir):
-        global bus_dict
-        register_list = bus_dict[mem_dir]
+        global bus_dict_quantity
+        # Sé que tendré el dato, sumo uno a la cantidad de procesadores que poseen el dato
+        bus_dict_quantity[mem_dir] += 1
+        printToConsole(f"{self.instruction} {bus_dict_quantity[mem_dir]}")
         # Si nadie tiene el dato
-        if len(register_list) == 0:
+        if bus_dict_quantity == 1:
             self.instruction_Step = 3
             return
         # alguien tiene el dato
@@ -367,6 +383,10 @@ class CPU:
     def write_SomebodyHasIt_LoadFromThere(self, mem_dir, data):
         global bus_dict
         register_list = bus_dict[mem_dir]
+        # Si el dato dejó de estar durante la ejecución de la instrucción, vuelva al paso 3
+        if len(register_list) == 0:
+            self.instruction_Step = 3
+            return
         for block in register_list:
             if block.state in ("Modified", "Owned", "Exclusive"):
                 # Escribo el valor en el otro CPU en memoria
@@ -388,9 +408,13 @@ class CPU:
         global bus_dict
         register_list = bus_dict[mem_dir]
         # Escribo el dato en memoria del dato que lo haya modificado
-        for block in register_list:
-            if block.state in ("Modified", "Owned", "Exclusive"):
-                block.writeInMemory()
+        try:
+            for block in register_list:
+                if block.state in ("Modified", "Owned", "Exclusive"):
+                    block.writeInMemory()
+        except:
+            self.instruction_Step = 6
+            return
 
         # Invalido el resto de CPUs
         self.write_invalidOthers(mem_dir)
@@ -398,9 +422,11 @@ class CPU:
         # Actualizo el estado de mi cache
         last_caracter = mem_dir[-1]
         parityBlocks = self.parity[last_caracter]
+        changed_flag = True
         for block in parityBlocks:
-            if block.memory == mem_dir:
+            if block.memory == mem_dir and changed_flag:
                 block.update("Modified", mem_dir, data)
+                changed_flag = False
 
         # Finalizo la ejecución
         self.instruction_Step = 0
@@ -422,8 +448,11 @@ class CPU:
     def write_invalidOthers(self, mem_dir):
         global bus_dict
         register_list = bus_dict[mem_dir]
-        for block in register_list:
-            block.state = "Invalid"
+        try:
+            for block in register_list:
+                block.state = "Invalid"
+        except:
+            return
 
 
 class CacheBlock:
@@ -456,7 +485,7 @@ def newCycle_cpus():
     printToConsole("------------------------------------------------")
     for cpu in cpus_list:
         cpu.executeCycle()
-    checkModifiedCornerCase()
+    # checkModifiedCornerCase()
     render_CPU_info()
     create_memory_table(memory_frame, ("Arial", 12), "white")
 
@@ -659,7 +688,7 @@ def render_cpu_cache(cpu, parent):
             bg="white",
             justify="center",
         )
-        blockName.place(x=10, y=y_pos)
+        blockName.place(x=5, y=y_pos)
 
         Statelabel = tk.Label(
             parent,
@@ -668,7 +697,7 @@ def render_cpu_cache(cpu, parent):
             bg="white",
             justify="center",
         )
-        Statelabel.place(x=60, y=y_pos)
+        Statelabel.place(x=55, y=y_pos)
 
         Memlabel = tk.Label(
             parent,
@@ -677,7 +706,7 @@ def render_cpu_cache(cpu, parent):
             bg="white",
             justify="center",
         )
-        Memlabel.place(x=135, y=y_pos)
+        Memlabel.place(x=130, y=y_pos)
         Datalabel = tk.Label(
             parent,
             text=format(cacheObject.data, "04X"),
@@ -685,7 +714,7 @@ def render_cpu_cache(cpu, parent):
             bg="white",
             justify="center",
         )
-        Datalabel.place(x=185, y=y_pos)
+        Datalabel.place(x=180, y=y_pos)
 
         instructionText = cpus_dict[cpu].instruction
         if instructionText != "":

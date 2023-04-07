@@ -1,35 +1,37 @@
-21:01:07: Paso 5. Mem 001
-21:01:14: Paso 4. Mem 001
-21:01:16: Paso 2. Mem 001
-21:01:16: No existe un bloque 000 en el CPU2.
-21:01:22: Paso 5. Mem 100
-21:01:37: Paso 4. Mem 100
-21:01:38: Paso 2. Mem 100
-21:01:38: No existe un bloque 000 en el CPU1.
-21:01:47: Paso 5. Mem 110
-21:01:47: Paso 5. Mem 000
-21:01:49: Paso 4. Mem 110
-21:01:49: Paso 4. Mem 000
-21:01:51: Paso 2. Mem 110
-21:01:51: No existe un bloque 000 en el CPU1.
-21:01:51: Paso 2. Mem 000
-21:01:51: No existe un bloque 000 en el CPU2.
-21:02:30: Paso 5. Mem 010
-21:02:32: Paso 4. Mem 010
-21:02:32: Paso 5. Mem 001
-21:02:35: Paso 2. Mem 010
-21:02:35: No existe un bloque 000 en el CPU0.
-21:02:35: Paso 1. Mem 001
-21:02:58: Paso 5. Mem 110
-21:03:00: Paso 1. Mem 110
-21:03:24: Paso 5. Mem 110
-21:03:26: Paso 5. Mem 110
-21:03:26: Paso 4. Mem 110
-21:03:26: Paso 5. Mem 011
-21:03:28: Paso 1. Mem 110
-21:03:28: Paso 3. Mem 110
-21:03:28: No existe un bloque 000 en el CPU2.
-21:03:28: Paso 4. Mem 011
-21:03:30: Paso 2. Mem 011
-21:03:30: No existe un bloque 000 en el CPU3.
+23:26:44: CPU0: Ingresando instrucción WRITE 111 AAAA.
+23:26:46: ------------------------------------------------
+23:26:46: CPU0: Ejecutando instruccion: WRITE 111 AAAA
+23:26:46: CPU1: Generando instrucciones.
+23:26:46: CPU2: Generando instrucciones.
+23:26:46: CPU3: Generando instrucciones.
+23:26:46: ------------------------------------------------
+23:26:46: CPU0: Write miss
+23:26:46: P0: WRITE 111 AAAA 1
+23:26:46: CPU1: Ejecutando instruccion: WRITE 101 1C7C
+23:26:46: CPU2: Ejecutando instruccion: WRITE 101 B02D
+23:26:46: CPU3: Ejecutando instruccion: READ 001
+23:26:47: ------------------------------------------------
+23:26:47: CPU1: Write miss
+23:26:47: P1: WRITE 101 1C7C 1
+23:26:47: CPU2: Write miss
+23:26:47: P2: WRITE 101 B02D 2
+23:26:47: CPU3: Read miss
+23:26:47: P3: READ 001 1
+23:26:49: ------------------------------------------------
+23:26:55: ------------------------------------------------
+23:27:09: CPU3: Ingresando instrucción READ 111.
+23:27:11: ------------------------------------------------
+23:27:11: CPU0: Generando instrucciones.
+23:27:11: CPU3: Ejecutando instruccion: READ 111
+23:27:16: ------------------------------------------------
+23:27:16: CPU0: Ejecutando instruccion: READ 010
+23:27:16: CPU1: Generando instrucciones.
+23:27:16: CPU2: Generando instrucciones.
+23:27:16: CPU3: Read miss
+23:27:16: P0: READ 111 1
+23:27:34: ------------------------------------------------
+23:27:34: CPU0: Read miss
+23:27:34: P0: READ 010 1
+23:27:34: CPU1: Ejecutando instruccion: READ 111
+23:27:34: CPU2: Calculando.
 
