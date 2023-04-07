@@ -710,6 +710,7 @@ def open_popup():
 
 
 def generate_instruction_popup():
+
     popup_win = tk.Toplevel()
     popup_win.wm_title("Generar instrucción")
     popup_win.resizable(False, False)
@@ -979,7 +980,7 @@ generate_instruction_photoimage = tk.PhotoImage(
 generate_instruction_button = tk.Button(
     buttons_frame,
     image=generate_instruction_photoimage,
-    command=generate_instruction_popup,
+    command=open_popup,
     bg="white",
     borderwidth=0,
 )
