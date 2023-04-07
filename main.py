@@ -31,6 +31,7 @@ class CPU:
             self.executeInstruction()
 
     def generateNewInstruction(self):
+        printToConsole(f"CPU{self.id}: Generando instrucciones.")
         self.instruction = self.newInstruction()
         self.instructionList = self.createListFromInstruction(self.instruction)
         self.instruction_Step = self.setInstructionLenght(self.instructionList)
@@ -43,8 +44,8 @@ class CPU:
 
         # Calc
         if inst_type == 1:
+            printToConsole(f"CPU{self.id}: Calculando.")
             self.instruction_Step = 0
-
         if self.instruction_Step == 0:
             self.instruction = ""
         # Read
@@ -109,12 +110,22 @@ class CPU:
         # Retornamos la lista modificada
         return values
 
+    def setNewInstruction(self, instruction):
+        printToConsole(f"CPU{self.id}: Ingresando instrucción {instruction[4:]}.")
+        self.instruction = instruction
+        self.instructionList = self.createListFromInstruction(self.instruction)
+        self.instruction_Step = self.setInstructionLenght(self.instructionList)
+
+        render_CPU_info()
+
     # Read logic -------------------------------------------------------------------------
 
     def executeRead(self, mem_dir):
         # Checkea si es un readMiss o si tengo el dato
         if self.instruction_Step == 5:
-            printToConsole(f"CPU{self.id}: Ejecutando instruccion: {self.instruction}")
+            printToConsole(
+                f"CPU{self.id}: Ejecutando instruccion: {self.instruction[4:]}"
+            )
             self.read_CheckMiss(mem_dir)
             return
         # Es un read Miss
@@ -236,7 +247,9 @@ class CPU:
     def executeWrite(self, mem_dir, data):
         # Checkea si es un writeMiss o si tengo el dato
         if self.instruction_Step == 6:
-            printToConsole(f"CPU{self.id}: Ejecutando instruccion: {self.instruction}")
+            printToConsole(
+                f"CPU{self.id}: Ejecutando instruccion: {self.instruction[4:]}"
+            )
             self.write_CheckMiss(mem_dir)
             return
         # No tengo el dato, checkeo si alguien más lo tiene
@@ -432,6 +445,7 @@ def newCycle_cpus():
     printToConsole("------------------------------------------------")
     for cpu in cpus_list:
         cpu.executeCycle()
+    checkModifiedCornerCase()
     render_CPU_info()
     create_memory_table(memory_frame, ("Arial", 12), "white")
 
@@ -474,6 +488,18 @@ def LoopExecution():
         main.after(cycle_duration, LoopExecution)
     else:
         return
+
+
+# Por ejemplo, si coinciden justo una escritura y una lectura del mismo espacio de memoria. Se subiría como Exclusivo y modified a la vez
+def checkModifiedCornerCase():
+    global bus_dict
+    for mem_dir, lista in bus_dict.items():
+        if len(lista) != 0:
+            for block in lista:
+                if block.state == "Modified":
+                    for possible_invalid_block in lista:
+                        if possible_invalid_block.state == "Exclusive":
+                            possible_invalid_block.state = "Invalid"
 
 
 # -------- Console Logic ------------------------------
@@ -671,6 +697,144 @@ def clean_frame(frame):
         widget.destroy()
 
 
+pop_up_flag = True
+
+
+def open_popup():
+    global pop_up_flag
+    if pop_up_flag:
+        pop_up_flag = False
+        generate_instruction_popup()
+    else:
+        return
+
+
+def generate_instruction_popup():
+    popup_win = tk.Toplevel()
+    popup_win.wm_title("Generar instrucción")
+    popup_win.resizable(False, False)
+
+    popup_frame = tk.Frame(popup_win, bg="white")
+    popup_frame.pack(expand=True, fill=tk.BOTH)
+
+    address_entry = tk.Entry(popup_frame)
+    data_entry = tk.Entry(popup_frame)
+    processor_var = tk.IntVar()
+    instruction_var = tk.StringVar()
+
+    def validate_binary(value, num_bits):
+        if not value or len(value) != num_bits:
+            return False
+        for bit in value:
+            if bit not in ("0", "1"):
+                return False
+        return True
+
+    def validate_hex(value, num_digits):
+        if not value or len(value) != num_digits:
+            return False
+        for digit in value:
+            if digit not in "0123456789ABCDEFabcdef":
+                return False
+        return True
+
+    def close_popup():
+        global pop_up_flag
+        pop_up_flag = True
+        popup_win.destroy()
+
+    def submit():
+        global cpus_list
+        processor = processor_var.get()
+        instruction_type = instruction_var.get()
+
+        if instruction_type == "CALC":
+            instruction = "P0: CALC"
+        elif instruction_type == "READ":
+            address = address_entry.get()
+            if not validate_binary(address, 3):
+                messagebox.showerror(
+                    "Error",
+                    "Por favor, ingrese una dirección de memoria válida (000-111).",
+                )
+                return
+            instruction = f"P0: READ {address}"
+        elif instruction_type == "WRITE":
+            address = address_entry.get()
+            data = data_entry.get()
+            if not validate_binary(address, 3):
+                messagebox.showerror(
+                    "Error",
+                    "Por favor, ingrese una dirección de memoria válida (000-111).",
+                )
+                return
+            if not validate_hex(data, 4):
+                messagebox.showerror(
+                    "Error",
+                    "Por favor, ingrese un dato hexadecimal válido (0000-ffff).",
+                )
+                return
+            instruction = f"P0: WRITE {address} {data.upper()}"
+        cpus_list[processor].setNewInstruction(instruction)
+        close_popup()
+
+    tk.Label(
+        popup_frame, text="Número de procesador (0-3):", font=("Arial", 12), bg="white"
+    ).grid(row=0, column=0, sticky="w")
+    for i in range(4):
+        tk.Radiobutton(
+            popup_frame,
+            text=str(i),
+            variable=processor_var,
+            value=i,
+            font=("Arial", 12),
+            bg="white",
+        ).grid(row=0, column=i + 1)
+
+    tk.Label(
+        popup_frame, text="Tipo de instrucción:", font=("Arial", 12), bg="white"
+    ).grid(row=1, column=0, sticky="w")
+    instructions = ["CALC", "READ", "WRITE"]
+    for i, instruction in enumerate(instructions):
+        tk.Radiobutton(
+            popup_frame,
+            text=instruction,
+            variable=instruction_var,
+            value=instruction,
+            font=("Arial", 12),
+            bg="white",
+        ).grid(row=1, column=i + 1)
+
+    tk.Label(
+        popup_frame,
+        text="Dirección de memoria (000-111):",
+        font=("Arial", 12),
+        bg="white",
+    ).grid(row=2, column=0, sticky="w")
+
+    address_entry.grid(row=2, column=1)
+
+    tk.Label(
+        popup_frame,
+        text="Dato hexadecimal (0000-ffff):",
+        font=("Arial", 12),
+        bg="white",
+    ).grid(row=3, column=0, sticky="w")
+
+    data_entry.grid(row=3, column=1)
+
+    submit_button = tk.Button(
+        popup_frame,
+        image=generate_instruction_photoimage,
+        bg="white",
+        command=submit,
+        borderwidth=0,
+    )
+    submit_button.grid(row=3, column=3)
+
+    main.wait_window(popup_win)
+
+
 # -------------------------------Variables globales--------------------------------------------------
 
 # Bus
@@ -788,32 +952,43 @@ botton_frame = tk.Frame(
 )
 botton_frame.place(x=0, y=300)
 
-memory_frame = tk.Frame(botton_frame, bg="white", height=100, width=420)
+memory_frame = tk.Frame(botton_frame, bg="white", height=100, width=330)
 memory_frame.place(x=0, y=0)
 
-buttons_frame = tk.Frame(botton_frame, bg="white", height=100, width=130)
-buttons_frame.place(x=325, y=0)
+buttons_frame = tk.Frame(botton_frame, bg="white", height=100, width=160)
+buttons_frame.place(x=330, y=0)
 
-console_frame = tk.Frame(botton_frame, bg="white", height=100, width=445)
-console_frame.place(x=455, y=0)
+console_frame = tk.Frame(botton_frame, bg="white", height=100, width=410)
+console_frame.place(x=490, y=0)
 
 # --------------- Componenents ----------------------------------------
 
 # Consola
 
 console_text = scrolledtext.ScrolledText(
-    console_frame, wrap=tk.WORD, width=60, height=6, font=("Arial", 10)
+    console_frame, wrap=tk.WORD, width=55, height=6, font=("Arial", 10)
 )
 console_text.grid(column=0, pady=0, padx=0)
 console_text["state"] = "disabled"
 
 
 # ----------------------------Botones----------------------------------
-
-new_instruction_photoimage = tk.PhotoImage(file=r"images\button_nueva-instruccion.png")
-new_instruction_button = tk.Button(
+generate_instruction_photoimage = tk.PhotoImage(
+    file=r"images\button_generar-instruccion.png"
+)
+generate_instruction_button = tk.Button(
     buttons_frame,
-    image=new_instruction_photoimage,
+    image=generate_instruction_photoimage,
+    command=generate_instruction_popup,
+    bg="white",
+    borderwidth=0,
+)
+
+
+single_cycle_photoimage = tk.PhotoImage(file=r"images\button_ciclo-unico.png")
+single_cycle_button = tk.Button(
+    buttons_frame,
+    image=single_cycle_photoimage,
     command=manualGlobalCycle,
     bg="white",
     borderwidth=0,
@@ -844,10 +1019,10 @@ reset_button = tk.Button(
     borderwidth=0,
 )
 
-new_instruction_button.place(x=15, y=2)
-loop_button.place(x=33, y=35)
-reset_button.place(x=42, y=68)
-
+generate_instruction_button.place(x=2, y=2)
+loop_button.place(x=2, y=35)
+reset_button.place(x=2, y=68)
+single_cycle_button.place(x=75, y=68)
 
 # ----------------------------Memoria----------------------------------
 
