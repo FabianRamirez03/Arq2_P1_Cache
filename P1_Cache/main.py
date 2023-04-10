@@ -203,7 +203,8 @@ class CPU:
                     else:
                         pass
         except:
-            printToConsole(bus_dir_reg)
+            self.instruction_Step = 5
+            return
         # Finalizo la lectura
         self.instruction_Step = 0
 
@@ -389,12 +390,16 @@ class CPU:
         if len(register_list) == 0:
             self.instruction_Step = 3
             return
-        for block in register_list:
-            if block.state in ("Modified", "Owned", "Exclusive"):
-                # Escribo el valor en el otro CPU en memoria
-                block.writeInMemory()
-                # Invalido el resto de CPUs
-                self.write_invalidOthers(mem_dir)
+        try:
+            for block in register_list:
+                if block.state in ("Modified", "Owned", "Exclusive"):
+                    # Escribo el valor en el otro CPU en memoria
+                    block.writeInMemory()
+                    # Invalido el resto de CPUs
+                    self.write_invalidOthers(mem_dir)
+        except:
+            self.instruction_Step = 6
+            return
 
         # Selecciono el bloque en el que insertaré el dato
         insertedBlock = self.write_loadData("Modified", mem_dir, data)
