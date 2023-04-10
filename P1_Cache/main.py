@@ -3,7 +3,9 @@ from tkinter import scrolledtext, messagebox
 import time
 import random
 
-main = tk.Tk(className="Arquitectura de Computadores 2. Proyecto I")
+main = tk.Tk(
+    className="Modelo de protocolo para coherencia de caché en sistemas multiprocesador"
+)
 # ----------------- Logic --------------------------------------------
 
 # -------------CPUS-------------------
@@ -79,8 +81,8 @@ class CPU:
             return format(num, f"0{length}X")
 
         # Distribución de probabilidad
-        p_calc = 1 / 5
-        p_write = 2 / 5
+        p_calc = 1 / 3
+        p_write = 1 / 3
 
         r = random.random()
 
@@ -786,6 +788,8 @@ def generate_instruction_popup():
         pop_up_flag = True
         popup_win.destroy()
 
+    popup_win.protocol("WM_DELETE_WINDOW", close_popup)
+
     def submit():
         global cpus_list
         processor = processor_var.get()
@@ -1029,7 +1033,7 @@ console_text["state"] = "disabled"
 
 # ----------------------------Botones----------------------------------
 generate_instruction_photoimage = tk.PhotoImage(
-    file=r"images\button_generar-instruccion.png"
+    file=r"P1_Cache\\images\button_generar-instruccion.png"
 )
 generate_instruction_button = tk.Button(
     buttons_frame,
@@ -1040,7 +1044,7 @@ generate_instruction_button = tk.Button(
 )
 
 
-single_cycle_photoimage = tk.PhotoImage(file=r"images\button_ciclo-unico.png")
+single_cycle_photoimage = tk.PhotoImage(file=r"P1_Cache\\images\button_ciclo-unico.png")
 single_cycle_button = tk.Button(
     buttons_frame,
     image=single_cycle_photoimage,
@@ -1050,8 +1054,12 @@ single_cycle_button = tk.Button(
 )
 
 
-loop_photoimage_detener = tk.PhotoImage(file=r"images\button_detener-ciclo.png")
-loop_photoimage_iniciar = tk.PhotoImage(file=r"images\button_iniciar-ciclo.png")
+loop_photoimage_detener = tk.PhotoImage(
+    file=r"P1_Cache\\images\button_detener-ciclo.png"
+)
+loop_photoimage_iniciar = tk.PhotoImage(
+    file=r"P1_Cache\\images\button_iniciar-ciclo.png"
+)
 
 loop_photoimage = loop_photoimage_detener if loopCyclesFlag else loop_photoimage_iniciar
 
@@ -1065,7 +1073,7 @@ loop_button = tk.Button(
 )
 
 
-reset_photoimage = tk.PhotoImage(file=r"images\button_reiniciar.png")
+reset_photoimage = tk.PhotoImage(file=r"P1_Cache\\images\button_reiniciar.png")
 reset_button = tk.Button(
     buttons_frame,
     image=reset_photoimage,
