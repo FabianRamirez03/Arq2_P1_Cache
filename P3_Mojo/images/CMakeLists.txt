@@ -9,7 +9,7 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 
 add_executable(images imagenC.cpp)
 
-target_link_libraries( opencvtest ${OpenCV_LIBS} )
+target_link_libraries(images ${OpenCV_LIBS} )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

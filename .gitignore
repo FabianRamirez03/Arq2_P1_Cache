@@ -6,3 +6,9 @@ logs.txt
 P3_Mojo/.vscode/c_cpp_properties.json
 
 P3_Mojo/.vscode/settings.json
+
+P3_Mojo/build/.cmake/api/v1/query/client-vscode/query.json
+
+*.json
+
+P3_Mojo/build/

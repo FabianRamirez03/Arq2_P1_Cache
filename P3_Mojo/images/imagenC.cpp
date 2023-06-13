@@ -1,6 +1,7 @@
 #include <iostream>
-#include <stdio.h>
+#include <fstream>
 #include <opencv2/opencv.hpp>
+
 
 int main()
 {
@@ -8,7 +9,8 @@ int main()
     std::string ruta_imagen = "images/perros.jpg";
 
     // Tiempo inicial de ejecucion
-    double inicio = cv::getTickCount();
+    int64 inicio = cv::getTickCount();
+
 
     // Leer la imagen
     cv::Mat img = cv::imread(ruta_imagen);
