@@ -1,1 +1,1 @@
-{'TiempoPython': 0.0940096378326416, 'TiempoMOJO': 0.123}
+{'TiempoPython': 0.07699823379516602, 'TiempoMOJO': 0.123}

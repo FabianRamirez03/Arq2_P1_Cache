@@ -3,3 +3,6 @@ logs.txt
 .vscode/*
 *.exe
 *.pyc
+P3_Mojo/.vscode/c_cpp_properties.json
+
+P3_Mojo/.vscode/settings.json
