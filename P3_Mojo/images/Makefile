@@ -8,6 +8,7 @@ all: $(TARGET)
 
 $(TARGET): imagenC.cpp
 	$(CC) $(CFLAGS) -o $(TARGET) imagenC.cpp $(LDFLAGS)
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
 
 clean:
 	rm -f $(TARGET)

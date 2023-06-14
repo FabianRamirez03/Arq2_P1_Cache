@@ -6,8 +6,7 @@
 int main()
 {
     // Ruta de la imagen
-    
-    std::string ruta_imagen = "P3_Mojo/images/perros.jpg";
+    std::string ruta_imagen = "perros.jpg";
 
     // Tiempo inicial de ejecucion
     int64 inicio = cv::getTickCount();
