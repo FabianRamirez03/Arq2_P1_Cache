@@ -1,0 +1,1 @@
+{'TiempoPython': 0.07400393486022949, 'TiempoMOJO': 0.123}

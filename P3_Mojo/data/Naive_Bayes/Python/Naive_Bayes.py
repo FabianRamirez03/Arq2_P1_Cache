@@ -1,6 +1,6 @@
 import numpy as np
 import csv
-
+import time
 
 class NaiveBayes:
     def __init__(self):
@@ -37,6 +37,7 @@ class NaiveBayes:
         
         return predictions
 
+start_time = time.time()
 
 # Leer datos de entrenamiento desde archivo CSV
 X_train = []
@@ -61,5 +62,13 @@ X_test = np.array([[1,1,1,1,1,1,1,1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,1,1,0,0,0,1,1,0,
 
 # Realizar predicciones
 y_pred = model.predict(X_test)
+
+# Fin del procesamiento
+end_time = time.time()
+
+# Calcular tiempo de procesamiento
+processing_duration = end_time - start_time
+
+print("Tiempo de procesamiento total: {:.2f} segundos".format(processing_duration))
 
 print("Predicciones:", y_pred)

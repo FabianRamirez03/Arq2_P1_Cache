@@ -3,6 +3,18 @@ logs.txt
 .vscode/*
 *.exe
 *.pyc
+P3_Mojo/.vscode/c_cpp_properties.json
+
+P3_Mojo/.vscode/settings.json
+
+P3_Mojo/build/.cmake/api/v1/query/client-vscode/query.json
+
+*.json
+
+P3_Mojo/build/
+
+P3_Mojo/images/programa
+
 P3_Mojo/data/assets/
 
 P3_Mojo/data/lineal_regression/CPP/out/

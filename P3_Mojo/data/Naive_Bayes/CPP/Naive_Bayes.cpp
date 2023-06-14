@@ -4,6 +4,7 @@
 #include <cmath>
 #include <sstream>
 #include <algorithm>
+#include <chrono>
 
 class NaiveBayes {
 public:
@@ -153,6 +154,8 @@ void savePredictions(const std::vector<std::string>& predictions, const std::str
 }
 
 int main() {
+
+    auto inicio = std::chrono::high_resolution_clock::now();
     // Leer datos de entrenamiento desde archivo CSV
     std::vector<std::vector<int>> X_train = readCSV("../../assets/naive_bayes.csv");
     std::vector<std::string> y_train = readLabelsCSV("../../assets/naive_bayes.csv");
@@ -175,5 +178,15 @@ int main() {
 
     std::cout << "Predicciones guardadas en predictions.txt" << std::endl;
 
+    // Obtener el tiempo de finalización y calcular la duración
+    auto fin = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duracion = fin - inicio;
+
+    // Mostrar la duración de la ejecución
+    std::cout << "Tiempo de ejecución: " << duracion.count() << " segundos\n";
+
     return 0;
+
+
+
 }
