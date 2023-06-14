@@ -4,6 +4,7 @@
 #include <vector>
 #include <cmath>
 #include <Eigen/Dense>
+#include <chrono>
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -59,6 +60,9 @@ public:
 };
 
 int main() {
+
+    auto inicio = std::chrono::high_resolution_clock::now();
+
     LinearRegression model;
     model.leer_archivo_csv();
 
@@ -83,6 +87,12 @@ int main() {
     for (int i = 0; i < X_test.rows(); ++i) {
         std::cout << "X_test: " << X_test(i, 0) << " y_pred: " << y_pred(i) << std::endl;
     }
+    // Obtener el tiempo de finalización y calcular la duración
+    auto fin = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duracion = fin - inicio;
+
+    // Mostrar la duración de la ejecución
+    std::cout << "Tiempo de ejecución: " << duracion.count() << " segundos\n";
 
     return 0;
 }

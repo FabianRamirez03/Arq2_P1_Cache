@@ -57,9 +57,3 @@ processing_duration = end_time - start_time
 
 print("Tiempo de procesamiento total: {:.2f} segundos".format(processing_duration))
 
-"""
-# Imprimir las predicciones
-print("Predicciones:")
-for i in range(X_test.shape[0]):
-    print("X_test:", X_test[i][0], "y_pred:", y_pred[i])
-"""
