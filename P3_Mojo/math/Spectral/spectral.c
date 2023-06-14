@@ -178,14 +178,17 @@ static double spectral_game(int N) {
 
 int main(int argc, char *argv[]) {
   int N = ((argc >= 2) ? atoi(argv[1]) : 2000);
-  time_t start, end;
-  start = time(NULL);
+  // to store the execution time of code
+  double time_spent = 0.0;
+  clock_t begin = clock();
 
   printf("%.9f\n", spectral_game(N));
-  end = time(NULL);
-  double duration = difftime(end, start);
+  
+  clock_t end = clock();
 
-  printf("Duración de ejecución: %.2f segundos\n", duration);
+  time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
 
+  printf("The elapsed time is %f seconds\n", time_spent);
+  
   return 0;
 }
