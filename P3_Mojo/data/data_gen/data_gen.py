@@ -1,30 +1,22 @@
 import csv
 import random
 
-def generar_logistic_csv():
-    parejas = []
-
-    # Generar parejas que sumen menos de 500
-    for _ in range(5000):
-        num1 = random.randint(1, 4999)
-        num2 = random.randint(1, 5000 - num1)
-        parejas.append((num1, num2, 0))
-
-    # Generar parejas que sumen más de 500 pero menos de 1000
-    for _ in range(5000):
-        num1 = random.randint(1, 9999)
-        num2 = random.randint(1, 10000 - num1)
-        parejas.append((num1, num2, 1))
-
-
-    # Escribir las parejas en un archivo CSV
-    with open('assets/logistic_regression.csv', 'w', newline='') as archivo_csv:
-        escritor_csv = csv.writer(archivo_csv)
-
-        for pareja in parejas:
-            escritor_csv.writerow(pareja)
-
-    print("Archivo CSV generado exitosamente.")
+def generar_bayes_csv():
+    # Generar los datos
+    datos = []
+    for _ in range(1000000):
+        fila = [random.choice([0, 1]) for _ in range(100)]
+        suma_fila = sum(fila)
+        etiqueta = "B" if suma_fila > 50 else "A"
+        fila.append(etiqueta)
+        datos.append(fila)
+    
+    # Guardar los datos en un archivo CSV
+    with open('assets/naive_bayes.csv', 'w', newline='') as archivo:
+        escritor_csv = csv.writer(archivo)
+        escritor_csv.writerows(datos)
+    
+    print("Naive Bayes CSV generado satisfactoriamente")
 
 
 def generar_lineal_csv():
@@ -54,7 +46,7 @@ def generar_lineal_csv():
         for pareja in parejas:
             escritor_csv.writerow(pareja)
 
-    print("Archivo CSV generado exitosamente.")
+    print("Regresion lineal CSV generado exitosamente.")
 
 generar_lineal_csv()
-generar_logistic_csv()
+generar_bayes_csv()
