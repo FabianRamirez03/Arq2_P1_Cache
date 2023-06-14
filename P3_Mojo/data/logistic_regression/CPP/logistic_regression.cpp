@@ -1,97 +1,114 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <vector>
 #include <cmath>
+#include <Eigen/Dense>
+
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
 
 class LogisticRegression {
-private:
-    double learning_rate;
-    int num_iterations;
-    std::vector<double> weights;
-    double bias;
+public:
+    LogisticRegression(double learning_rate = 0.01, int num_iterations = 1000) {
+        learning_rate_ = learning_rate;
+        num_iterations_ = num_iterations;
+        weights_ = VectorXd::Zero(2);
+        bias_ = 0;
+    }
+
+    void leer_archivo_csv() {
+        std::ifstream archivo_csv("assets/logistic_regression.csv");
+        std::string linea;
+
+        while (std::getline(archivo_csv, linea)) {
+            std::vector<int> tmp;
+            std::istringstream iss(linea);
+            std::string valor;
+
+            while (std::getline(iss, valor, ',')) {
+                tmp.push_back(std::stoi(valor));
+            }
+
+            datos_.push_back(VectorXd::Map(tmp.data(), tmp.size() - 1));
+            etiquetas_.push_back(tmp.back());
+        }
+
+        archivo_csv.close();
+    }
 
     double sigmoid(double z) {
-        return 1 / (1 + exp(-z));
+        z = std::max(-500.0, std::min(z, 500.0));
+        return 1 / (1 + std::exp(-z));
     }
 
     void initialize_parameters(int n_features) {
-        weights = std::vector<double>(n_features, 0.0);
-        bias = 0.0;
+        weights_ = VectorXd::Zero(n_features);
+        bias_ = 0;
     }
 
-public:
-    LogisticRegression(double learning_rate = 0.01, int num_iterations = 1000) {
-        this->learning_rate = learning_rate;
-        this->num_iterations = num_iterations;
-        this->weights = std::vector<double>();
-        this->bias = 0.0;
-    }
+    void fit(const MatrixXd& X, const VectorXd& y) {
+        initialize_parameters(X.cols());
 
-    void fit(std::vector<std::vector<double>>& X, std::vector<int>& y) {
-        initialize_parameters(X[0].size());
+        for (int iter = 0; iter < num_iterations_; ++iter) {
+            VectorXd linear_model = X * weights_ + bias_;
+            VectorXd y_pred = linear_model.unaryExpr([this](double x) { return sigmoid(x); });
 
-        for (int i = 0; i < num_iterations; i++) {
-            std::vector<double> linear_model(X.size(), 0.0);
-            std::vector<double> y_pred(X.size(), 0.0);
+            VectorXd dw = (1.0 / X.rows()) * X.transpose() * (y_pred - y);
+            double db = (1.0 / X.rows()) * (y_pred - y).sum();
 
-            for (int j = 0; j < X.size(); j++) {
-                for (int k = 0; k < X[0].size(); k++) {
-                    linear_model[j] += X[j][k] * weights[k];
-                }
-                linear_model[j] += bias;
-                y_pred[j] = sigmoid(linear_model[j]);
-            }
-
-            std::vector<double> dw(X[0].size(), 0.0);
-            double db = 0.0;
-
-            for (int j = 0; j < X[0].size(); j++) {
-                for (int k = 0; k < X.size(); k++) {
-                    dw[j] += (1.0 / X.size()) * X[k][j] * (y_pred[k] - y[k]);
-                }
-            }
-
-            for (int j = 0; j < X.size(); j++) {
-                db += (1.0 / X.size()) * (y_pred[j] - y[j]);
-            }
-
-            for (int j = 0; j < X[0].size(); j++) {
-                weights[j] -= learning_rate * dw[j];
-            }
-            bias -= learning_rate * db;
+            weights_ -= learning_rate_ * dw;
+            bias_ -= learning_rate_ * db;
         }
     }
 
-    std::vector<int> predict(std::vector<std::vector<double>>& X) {
-        std::vector<int> y_pred(X.size(), 0);
+    std::vector<int> predict(const MatrixXd& X) {
+        VectorXd linear_model = X * weights_ + bias_;
+        VectorXd y_pred = linear_model.unaryExpr([this](double x) { return sigmoid(x); });
+        std::vector<int> y_pred_class(y_pred.size());
 
-        for (int i = 0; i < X.size(); i++) {
-            double linear_model = 0.0;
-
-            for (int j = 0; j < X[0].size(); j++) {
-                linear_model += X[i][j] * weights[j];
-            }
-
-            linear_model += bias;
-            double y_pred_prob = sigmoid(linear_model);
-            y_pred[i] = (y_pred_prob > 0.5) ? 1 : 0;
+        for (int i = 0; i < y_pred.size(); ++i) {
+            y_pred_class[i] = (y_pred[i] > 0.5) ? 1 : 0;
         }
 
-        return y_pred;
+        return y_pred_class;
     }
+
+private:
+    double learning_rate_;
+    int num_iterations_;
+    VectorXd weights_;
+    double bias_;
+    std::vector<VectorXd> datos_;
+    std::vector<int> etiquetas_;
 };
 
 int main() {
-    std::vector<std::vector<double>> X_train = { {2.0, 1.0}, {1.0, 3.0}, {0.0, 2.0}, {1.0, 1.0}, {2.0, 2.0}, {4.0, 3.0}, {6.0, 5.0}, {3.0, 5.0}, {3.0, 3.0}, {6.0, 1.0} };
-    std::vector<int> y_train = { 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 };
+    LogisticRegression model(0.1, 10000);
+    model.leer_archivo_csv();
 
-    LogisticRegression model(0.1, 1000);
+    std::vector<VectorXd> datos = model.datos_;
+    VectorXd etiquetas = VectorXd::Map(model.etiquetas_.data(), model.etiquetas_.size());
+
+    // Convertir los datos y etiquetas a una matriz y vector de Eigen
+    MatrixXd X_train(datos.size(), datos[0].size());
+    VectorXd y_train(etiquetas.size());
+    for (int i = 0; i < datos.size(); ++i) {
+        X_train.row(i) = datos[i];
+        y_train[i] = etiquetas[i];
+    }
+
     model.fit(X_train, y_train);
 
-    std::vector<std::vector<double>> X_test = { {4.0, 2.0}, {2.0, 1.0} };
+    // Datos de prueba
+    MatrixXd X_test(2, 2);
+    X_test << 4, 2,
+              500, 6;
     std::vector<int> y_pred = model.predict(X_test);
 
+    // Imprimir las predicciones
     std::cout << "Predicciones:";
-    for (int i = 0; i < y_pred.size(); i++) {
+    for (int i = 0; i < y_pred.size(); ++i) {
         std::cout << " " << y_pred[i];
     }
     std::cout << std::endl;

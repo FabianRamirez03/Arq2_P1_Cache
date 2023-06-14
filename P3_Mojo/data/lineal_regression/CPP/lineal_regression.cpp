@@ -1,55 +1,86 @@
 #include <iostream>
-#include <Eigen/Dense>  // Se requiere la biblioteca Eigen para el álgebra lineal
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <cmath>
+#include <Eigen/Dense>
+
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
 
 class LinearRegression {
-private:
-    Eigen::VectorXd coefficients;
-
 public:
     LinearRegression() {
-        coefficients = Eigen::VectorXd();
+        coefficients = VectorXd::Zero(2);
     }
 
-    void fit(Eigen::MatrixXd X, Eigen::VectorXd y) {
+    void leer_archivo_csv() {
+        std::ifstream archivo_csv("../../assets/lineal_regression.csv");
+        std::string linea;
+
+        while (std::getline(archivo_csv, linea)) {
+            std::vector<int> tmp;
+            std::istringstream iss(linea);
+            std::string valor;
+
+            while (std::getline(iss, valor, ',')) {
+                tmp.push_back(std::stoi(valor));
+            }
+
+            datos.push_back(tmp[0]);
+            etiquetas.push_back(tmp[1]);
+        }
+
+        archivo_csv.close();
+    }
+
+    void fit(const MatrixXd& X, const VectorXd& y) {
         // Agregar una columna de unos a X para el término de sesgo (intercept)
-        Eigen::MatrixXd ones = Eigen::MatrixXd::Ones(X.rows(), 1);
-        X.conservativeResize(X.rows(), X.cols() + 1);
-        X.block(0, X.cols() - 1, X.rows(), 1) = ones;
+        MatrixXd X_ext(X.rows(), X.cols() + 1);
+        X_ext << MatrixXd::Ones(X.rows(), 1), X;
 
         // Calcular los coeficientes utilizando la fórmula de mínimos cuadrados
-        coefficients = (X.transpose() * X).inverse() * X.transpose() * y;
+        coefficients = (X_ext.transpose() * X_ext).inverse() * X_ext.transpose() * y;
     }
 
-    Eigen::VectorXd predict(Eigen::MatrixXd X) {
+    VectorXd predict(const MatrixXd& X) {
         // Agregar una columna de unos a X para el término de sesgo (intercept)
-        Eigen::MatrixXd ones = Eigen::MatrixXd::Ones(X.rows(), 1);
-        X.conservativeResize(X.rows(), X.cols() + 1);
-        X.block(0, X.cols() - 1, X.rows(), 1) = ones;
+        MatrixXd X_ext(X.rows(), X.cols() + 1);
+        X_ext << MatrixXd::Ones(X.rows(), 1), X;
 
         // Realizar predicciones utilizando los coeficientes aprendidos
-        return X * coefficients;
+        return X_ext * coefficients;
     }
+
+public:
+    VectorXd coefficients;
+    std::vector<int> datos;
+    std::vector<int> etiquetas;
 };
 
 int main() {
-    Eigen::MatrixXd X(5, 1);  // Característica: X
-    X << 1, 2, 3, 4, 5;
+    LinearRegression model;
+    model.leer_archivo_csv();
 
-    Eigen::VectorXd y(5);  // Etiqueta: y
-    y << 2, 4, 6, 8, 10;
+    // Datos de entrenamiento
+    MatrixXd X_train(model.datos.size(), 1);
+    VectorXd y_train(model.etiquetas.size());
+    for (int i = 0; i < model.datos.size(); ++i) {
+        X_train(i, 0) = model.datos[i];
+        y_train(i) = model.etiquetas[i];
+    }
 
     // Crear y entrenar el modelo de regresión lineal
-    LinearRegression model;
-    model.fit(X, y);
+    model.fit(X_train, y_train);
 
     // Realizar predicciones
-    Eigen::MatrixXd X_test(3, 1);  // Nuevos datos para predecir
-    X_test << 6, 7, 8;
-    Eigen::VectorXd y_pred = model.predict(X_test);
+    MatrixXd X_test(3, 1);
+    X_test << 500, 1500, 7000;  // Nuevos datos para predecir
+    VectorXd y_pred = model.predict(X_test);
 
     // Imprimir las predicciones
     std::cout << "Predicciones:" << std::endl;
-    for (int i = 0; i < X_test.rows(); i++) {
+    for (int i = 0; i < X_test.rows(); ++i) {
         std::cout << "X_test: " << X_test(i, 0) << " y_pred: " << y_pred(i) << std::endl;
     }
 
