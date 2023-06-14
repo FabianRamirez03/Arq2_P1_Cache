@@ -132,7 +132,11 @@ std::vector<std::string> readLabelsCSV(const std::string& filename) {
 
         while (std::getline(iss, value, ',')) {
             // Leer únicamente la última columna
-            labels.push_back(value);
+            if (!isNumeric(value)) {
+                labels.push_back(value);
+            }
+            
+            
         }
     }
 
