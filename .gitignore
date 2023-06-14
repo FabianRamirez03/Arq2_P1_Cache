@@ -12,3 +12,5 @@ P3_Mojo/build/.cmake/api/v1/query/client-vscode/query.json
 *.json
 
 P3_Mojo/build/
+
+P3_Mojo/images/programa
