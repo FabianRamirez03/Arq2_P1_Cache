@@ -9,3 +9,4 @@ build: clean
 
 run: build
 	./out/lineal_regression
+	
